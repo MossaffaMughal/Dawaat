@@ -34,8 +34,6 @@ const AdminDashboard = () => {
 
   // Order details state
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [updatingOrderId, setUpdatingOrderId] = useState(null);
-  const [newOrderStatus, setNewOrderStatus] = useState("");
 
   // Dialog state
   const [dialog, setDialog] = useState({
@@ -447,16 +445,12 @@ const AdminDashboard = () => {
   // Order handlers
   const handleUpdateOrderStatus = async (orderId, status) => {
     try {
-      setUpdatingOrderId(orderId);
-      setNewOrderStatus(status);
       await apiClient.put(`/orders/${orderId}/status`, { status });
       fetchAdminData();
-      setUpdatingOrderId(null);
       showNotification("Order status updated successfully", "success");
     } catch (error) {
       console.error("Error updating order:", error);
       showNotification("Error updating order status", "error");
-      setUpdatingOrderId(null);
     }
   };
 
@@ -1005,8 +999,10 @@ const AdminDashboard = () => {
                 <div className="status-update">
                   <label>Update Status:</label>
                   <select
-                    value={newOrderStatus || selectedOrder.status}
-                    onChange={(e) => setNewOrderStatus(e.target.value)}
+                    value={selectedOrder.status}
+                    onChange={(e) =>
+                      handleUpdateOrderStatus(selectedOrder.id, e.target.value)
+                    }
                   >
                     <option value="pending">Pending</option>
                     <option value="processing">Processing</option>
@@ -1014,18 +1010,6 @@ const AdminDashboard = () => {
                     <option value="delivered">Delivered</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
-                  <button
-                    type="button"
-                    className="submit-btn"
-                    onClick={() =>
-                      handleUpdateOrderStatus(
-                        selectedOrder.id,
-                        newOrderStatus || selectedOrder.status,
-                      )
-                    }
-                  >
-                    Update Status
-                  </button>
                 </div>
 
                 <button

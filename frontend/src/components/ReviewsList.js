@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import apiClient from "../utils/apiClient";
 import "../styles/ReviewsList.css";
 
@@ -7,11 +7,7 @@ const ReviewsList = ({ productId, refreshTrigger }) => {
   const [stats, setStats] = useState({ count: 0, averageRating: 0 });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchReviews();
-  }, [productId, refreshTrigger]);
-
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       setLoading(true);
       const [reviewsRes, statsRes] = await Promise.all([
@@ -26,7 +22,11 @@ const ReviewsList = ({ productId, refreshTrigger }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews, refreshTrigger]);
 
   const renderStars = (rating) => {
     return (

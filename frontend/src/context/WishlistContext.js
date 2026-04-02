@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useAuth } from "./AuthContext";
 import apiClient from "../utils/apiClient";
 
@@ -9,13 +9,7 @@ export const WishlistProvider = ({ children }) => {
   const [wishlist, setWishlist] = useState([]);
   const [wishlistIds, setWishlistIds] = useState(new Set());
 
-  useEffect(() => {
-    if (user) {
-      fetchWishlist();
-    }
-  }, [user]);
-
-  const fetchWishlist = async () => {
+  const fetchWishlist = useCallback(async () => {
     try {
       // Get wishlist product IDs
       const wishlistResponse = await apiClient.get(`/wishlist/${user.id}`);

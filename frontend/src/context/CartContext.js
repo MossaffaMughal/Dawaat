@@ -14,8 +14,6 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (product, quantity = 1, variant = null) => {
     setCart((prevCart) => {
-      // Create a unique key that includes variant information
-      const itemKey = variant ? `${product.id}-${variant}` : product.id;
       const existingItem = prevCart.find(
         (item) =>
           item.id === product.id &&

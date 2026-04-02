@@ -1,15 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import apiClient from "../utils/apiClient";
 
 const ReviewStats = ({ productId }) => {
   const [stats, setStats] = useState({ count: 0, averageRating: 0 });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchStats();
-  }, [productId]);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await apiClient.get(`/reviews/stats/${productId}`);
       setStats(response.data);
@@ -18,7 +14,11 @@ const ReviewStats = ({ productId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   if (loading) return null;
 

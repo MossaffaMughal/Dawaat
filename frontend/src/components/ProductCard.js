@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import apiClient from "../utils/apiClient";
 import { useWishlist } from "../context/WishlistContext";
 import ReviewStats from "./ReviewStats";
 import "../styles/ProductCard.css";
