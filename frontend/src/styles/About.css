@@ -1,0 +1,166 @@
+.about-page {
+  min-height: calc(100vh - 200px);
+}
+
+.about-header {
+  background-color: var(--light-bg);
+  padding: 60px 20px;
+  text-align: center;
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.about-header h1 {
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 10px;
+}
+
+.about-header p {
+  font-size: 18px;
+  color: #666;
+  font-style: italic;
+}
+
+.about-content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+.about-section {
+  margin-bottom: 50px;
+}
+
+.about-section h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 20px;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.about-section h2::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background-color: var(--secondary-color);
+}
+
+.about-section p {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #555;
+}
+
+.values-list {
+  list-style: none;
+  padding: 0;
+}
+
+.values-list li {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #555;
+  margin-bottom: 15px;
+  padding-left: 25px;
+  position: relative;
+}
+
+.values-list li::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+.reasons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 25px;
+  margin-top: 20px;
+}
+
+.reason {
+  background-color: var(--light-bg);
+  padding: 25px;
+  border-radius: 4px;
+  text-align: center;
+  transition: transform 0.3s;
+}
+
+.reason:hover {
+  transform: translateY(-5px);
+}
+
+.reason h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 10px;
+}
+
+.reason p {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .about-header h1 {
+    font-size: 24px;
+  }
+
+  .about-header p {
+    font-size: 16px;
+  }
+
+  .about-content {
+    padding: 40px 15px;
+  }
+
+  .about-section {
+    margin-bottom: 35px;
+  }
+
+  .about-section h2 {
+    font-size: 20px;
+  }
+
+  .about-section p {
+    font-size: 14px;
+  }
+
+  .reasons-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-header {
+    padding: 40px 15px;
+  }
+
+  .about-header h1 {
+    font-size: 20px;
+  }
+
+  .about-content {
+    padding: 20px 15px;
+  }
+
+  .about-section {
+    margin-bottom: 25px;
+  }
+
+  .about-section h2 {
+    font-size: 18px;
+  }
+}

@@ -1,0 +1,21 @@
+﻿{
+  "customerName": "Test Customer",
+  "customerEmail": "test@example.com",
+  "customerPhone": "1234567890",
+  "address": "123 Main St",
+  "city": "Karachi",
+  "postalCode": "75000",
+  "items": [
+    {
+      "productId": 1,
+      "productName": "Test Product",
+      "quantity": 1,
+      "price": 100,
+      "variant": null
+    }
+  ],
+  "totalAmount": 100,
+  "paymentMethod": "cod",
+  "shippingMethod": "standard",
+  "userId": null
+}

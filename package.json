@@ -1,0 +1,29 @@
+{
+  "name": "nigarish-ecommerce",
+  "version": "1.0.0",
+  "description": "Complete PERN stack e-commerce platform with admin portal",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "install-all": "npm install && npm --prefix backend install && npm --prefix frontend install",
+    "dev": "concurrently \"npm --prefix backend run dev\" \"npm --prefix frontend start\"",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix backend start"
+  },
+  "keywords": [
+    "pern",
+    "ecommerce",
+    "react",
+    "express",
+    "postgresql",
+    "vercel"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -1,0 +1,142 @@
+import React, { createContext, useContext, useState, useEffect } from "react";
+import axios from "axios";
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      verifyToken(token);
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const verifyToken = async (token) => {
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/auth/verify`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      // Fetch full user profile details
+      try {
+        const profileResponse = await axios.get(
+          `${process.env.REACT_APP_API_URL}/users/profile/${response.data.user.id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        setUser({
+          ...response.data.user,
+          ...profileResponse.data,
+        });
+      } catch {
+        // If profile fetch fails, just use the verified token data
+        setUser(response.data.user);
+      }
+    } catch (error) {
+      localStorage.removeItem("token");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async (email, password) => {
+    const response = await axios.post(
+      `${process.env.REACT_APP_API_URL}/auth/login`,
+      { email, password },
+    );
+    localStorage.setItem("token", response.data.token);
+
+    // Fetch full profile details
+    try {
+      const profileResponse = await axios.get(
+        `${process.env.REACT_APP_API_URL}/users/profile/${response.data.user.id}`,
+        {
+          headers: { Authorization: `Bearer ${response.data.token}` },
+        },
+      );
+      const fullUser = {
+        ...response.data.user,
+        ...profileResponse.data,
+      };
+      setUser(fullUser);
+      return { ...response.data, user: fullUser };
+    } catch {
+      setUser(response.data.user);
+      return response.data;
+    }
+  };
+
+  const register = async (email, password, profileData = {}) => {
+    const response = await axios.post(
+      `${process.env.REACT_APP_API_URL}/auth/register`,
+      { email, password },
+    );
+    if (response.data.token) {
+      localStorage.setItem("token", response.data.token);
+      setUser(response.data.user);
+
+      // If profile data provided, update profile after registration
+      if (profileData && Object.keys(profileData).length > 0) {
+        try {
+          await axios.put(
+            `${process.env.REACT_APP_API_URL}/users/profile/${response.data.user.id}`,
+            profileData,
+            {
+              headers: { Authorization: `Bearer ${response.data.token}` },
+            },
+          );
+          // Fetch updated profile
+          const profileResponse = await axios.get(
+            `${process.env.REACT_APP_API_URL}/users/profile/${response.data.user.id}`,
+            {
+              headers: { Authorization: `Bearer ${response.data.token}` },
+            },
+          );
+          setUser((prev) => ({
+            ...prev,
+            ...profileResponse.data,
+          }));
+        } catch (error) {
+          console.error("Error updating profile:", error);
+        }
+      }
+    }
+    return response.data;
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};

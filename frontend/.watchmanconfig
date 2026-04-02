@@ -1,0 +1,4 @@
+{
+  "ignore_dirs": ["node_modules", "build", "dist", "public/products", ".git"],
+  "watch_roots": ["src"]
+}
