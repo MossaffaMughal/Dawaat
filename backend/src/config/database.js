@@ -28,6 +28,17 @@ if (projectRef && normalizedHost?.startsWith(`db.${projectRef}.supabase.co`)) {
   if (normalizedUser?.startsWith("postgres.")) {
     normalizedUser = "postgres";
   }
+
+  // In serverless production, direct Supabase DB host can fail DNS lookup.
+  // Prefer the transaction pooler host unless explicitly overridden.
+  if (process.env.NODE_ENV === "production") {
+    normalizedHost =
+      process.env.SUPABASE_POOLER_HOST?.trim() ||
+      "aws-0-eu-west-1.pooler.supabase.com";
+    if (normalizedUser === "postgres") {
+      normalizedUser = `postgres.${projectRef}`;
+    }
+  }
 }
 
 if (projectRef && normalizedHost?.includes("pooler.supabase.com")) {
