@@ -1,0 +1,6 @@
+.vercel
+.env
+.env.*
+public/products/*
+!public/products/.gitkeep
+node_modules/
