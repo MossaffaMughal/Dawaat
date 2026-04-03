@@ -5,15 +5,28 @@ dotenv.config();
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const hasSupabaseCredentials = Boolean(supabaseUrl && supabaseAnonKey);
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("❌ Missing Supabase credentials!");
-  throw new Error("Supabase credentials are required");
+if (!hasSupabaseCredentials) {
+  console.warn(
+    "⚠️ Supabase credentials are missing. File storage features are disabled until SUPABASE_URL and SUPABASE_ANON_KEY are set.",
+  );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = hasSupabaseCredentials
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
+
+export const isSupabaseConfigured = () => hasSupabaseCredentials;
 
 export const initStorage = async () => {
+  if (!supabase) {
+    console.warn(
+      "⚠️ Skipping storage initialization: Supabase is not configured.",
+    );
+    return false;
+  }
+
   try {
     const { data: buckets, error: listError } =
       await supabase.storage.listBuckets();
@@ -49,6 +62,13 @@ export const initStorage = async () => {
 };
 
 export const testSupabaseConnection = async () => {
+  if (!supabase) {
+    console.warn(
+      "⚠️ Skipping Supabase connection test: Supabase is not configured.",
+    );
+    return false;
+  }
+
   try {
     const { error } = await supabase.storage.listBuckets();
     if (error) throw error;

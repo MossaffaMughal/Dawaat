@@ -3,6 +3,12 @@ import path from "path";
 
 export const uploadImage = async (file) => {
   try {
+    if (!supabase) {
+      throw new Error(
+        "Supabase storage is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY in backend/.env",
+      );
+    }
+
     if (!file || !file.buffer) {
       throw new Error("No file buffer provided");
     }
@@ -42,6 +48,12 @@ export const uploadImage = async (file) => {
 
 export const deleteImage = async (filePath) => {
   try {
+    if (!supabase) {
+      throw new Error(
+        "Supabase storage is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY in backend/.env",
+      );
+    }
+
     const { error } = await supabase.storage
       .from("products")
       .remove([filePath]);
