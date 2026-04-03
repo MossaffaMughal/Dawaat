@@ -36,7 +36,9 @@ if (projectRef && normalizedHost?.includes("pooler.supabase.com")) {
   }
 }
 
-const hasDiscreteDbConfig = Boolean(normalizedHost && normalizedUser && dbPassword);
+const hasDiscreteDbConfig = Boolean(
+  normalizedHost && normalizedUser && dbPassword,
+);
 
 let derivedConnectionString = null;
 if (!hasDiscreteDbConfig && !connectionString && supabaseUrl && dbPassword) {
