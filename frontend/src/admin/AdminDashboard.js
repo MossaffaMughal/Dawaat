@@ -297,10 +297,13 @@ const AdminDashboard = () => {
 
           console.log("Upload response:", response.data);
 
+          const returnedUrl = String(response.data.imageUrl || "").trim();
           const apiUrl =
             process.env.REACT_APP_API_URL || "http://localhost:5000/api";
-          const baseUrl = apiUrl.replace("/api", "");
-          const fullImageUrl = baseUrl + response.data.imageUrl;
+          const baseUrl = apiUrl.replace(/\/api\/?$/, "");
+          const fullImageUrl = /^https?:\/\//i.test(returnedUrl)
+            ? returnedUrl
+            : `${baseUrl}${returnedUrl.startsWith("/") ? "" : "/"}${returnedUrl}`;
 
           console.log("Full image URL:", fullImageUrl);
           uploadedUrls.push(fullImageUrl);
