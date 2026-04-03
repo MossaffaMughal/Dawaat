@@ -29,9 +29,30 @@ const initPromise = (async () => {
 })();
 
 // Middleware
+const configuredFrontendOrigins = (process.env.FRONTEND_URL || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const isAllowedFrontendOrigin = (origin) => {
+  if (!origin) return true;
+  if (origin === "http://localhost:3000") return true;
+  if (configuredFrontendOrigins.includes(origin)) return true;
+
+  // Allow Vercel preview deployments for this frontend project.
+  return /^https:\/\/dawaat-frontend(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(
+    origin,
+  );
+};
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: (origin, callback) => {
+      if (isAllowedFrontendOrigin(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   }),
 );

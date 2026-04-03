@@ -161,6 +161,14 @@ export const ensureDatabaseSchema = async () => {
   `);
 
   await pool.query(`
+    SELECT setval(
+      pg_get_serial_sequence('settings', 'id'),
+      GREATEST(COALESCE((SELECT MAX(id) FROM settings), 1), 1),
+      true
+    );
+  `);
+
+  await pool.query(`
     INSERT INTO settings (key, value)
     VALUES ('shipping_cost', '250')
     ON CONFLICT (key) DO NOTHING;
