@@ -12,22 +12,21 @@ import reviewRoutes from "./routes/reviewRoutes.js";
 import { initStorage, testSupabaseConnection } from "./config/supabase.js";
 import { uploadImage } from "./services/uploadService.js";
 import { testDatabaseConnection } from "./config/database.js";
+import { ensureDatabaseSchema } from "./db/ensureSchema.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-if (process.env.NODE_ENV !== "production") {
-  const init = async () => {
-    console.log("\n🔧 Initializing Dawaat Backend...");
-    await testSupabaseConnection();
-    await testDatabaseConnection();
-    await initStorage();
-    console.log("✅ All systems ready!\n");
-  };
-  init();
-}
+const initPromise = (async () => {
+  console.log("\n🔧 Initializing Dawaat Backend...");
+  await testDatabaseConnection();
+  await ensureDatabaseSchema();
+  await testSupabaseConnection();
+  await initStorage();
+  console.log("✅ All systems ready!\n");
+})();
 
 // Middleware
 app.use(
@@ -38,6 +37,16 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use(async (req, res, next) => {
+  try {
+    await initPromise;
+    next();
+  } catch (error) {
+    console.error("Initialization error:", error.message);
+    res.status(500).json({ message: "Server initialization failed" });
+  }
+});
 
 const storage = multer.memoryStorage();
 
