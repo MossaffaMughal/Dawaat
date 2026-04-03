@@ -13,7 +13,8 @@ const productsDir = path.resolve(__dirname, "../../public/products");
 const shouldCleanup = process.argv.includes("--cleanup");
 
 const ensureProductsBucket = async () => {
-  const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+  const { data: buckets, error: listError } =
+    await supabase.storage.listBuckets();
   if (listError) {
     throw new Error(`Failed to list buckets: ${listError.message}`);
   }
@@ -23,11 +24,14 @@ const ensureProductsBucket = async () => {
     return;
   }
 
-  const { error: createError } = await supabase.storage.createBucket("products", {
-    public: true,
-    allowedMimeTypes: ["image/png", "image/jpeg", "image/jpg", "image/webp"],
-    fileSizeLimit: 10485760,
-  });
+  const { error: createError } = await supabase.storage.createBucket(
+    "products",
+    {
+      public: true,
+      allowedMimeTypes: ["image/png", "image/jpeg", "image/jpg", "image/webp"],
+      fileSizeLimit: 10485760,
+    },
+  );
 
   if (createError) {
     throw new Error(`Failed to create products bucket: ${createError.message}`);
@@ -103,7 +107,9 @@ const main = async () => {
     const filename = getLocalFilename(sourceUrl);
     if (!filename) {
       failed += 1;
-      console.error(`[${row.id}] Skipped: could not parse filename from ${sourceUrl}`);
+      console.error(
+        `[${row.id}] Skipped: could not parse filename from ${sourceUrl}`,
+      );
       continue;
     }
 
@@ -137,10 +143,10 @@ const main = async () => {
     } = supabase.storage.from("products").getPublicUrl(storagePath);
 
     try {
-      await pool.query("UPDATE product_images SET image_url = $1 WHERE id = $2", [
-        publicUrl,
-        row.id,
-      ]);
+      await pool.query(
+        "UPDATE product_images SET image_url = $1 WHERE id = $2",
+        [publicUrl, row.id],
+      );
     } catch (updateError) {
       failed += 1;
       console.error(`[${row.id}] DB update failed: ${updateError.message}`);
