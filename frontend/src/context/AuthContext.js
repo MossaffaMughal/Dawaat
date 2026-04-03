@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "../utils/apiClient";
 
 const AuthContext = createContext();
 
@@ -18,17 +18,14 @@ export const AuthProvider = ({ children }) => {
 
   const verifyToken = async (token) => {
     try {
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_URL}/auth/verify`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const response = await apiClient.get("/auth/verify", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       // Fetch full user profile details
       try {
-        const profileResponse = await axios.get(
-          `${process.env.REACT_APP_API_URL}/users/profile/${response.data.user.id}`,
+        const profileResponse = await apiClient.get(
+          `/users/profile/${response.data.user.id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
@@ -49,16 +46,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-    const response = await axios.post(
-      `${process.env.REACT_APP_API_URL}/auth/login`,
-      { email, password },
-    );
+    const response = await apiClient.post("/auth/login", { email, password });
     localStorage.setItem("token", response.data.token);
 
     // Fetch full profile details
     try {
-      const profileResponse = await axios.get(
-        `${process.env.REACT_APP_API_URL}/users/profile/${response.data.user.id}`,
+      const profileResponse = await apiClient.get(
+        `/users/profile/${response.data.user.id}`,
         {
           headers: { Authorization: `Bearer ${response.data.token}` },
         },
@@ -76,10 +70,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (email, password, profileData = {}) => {
-    const response = await axios.post(
-      `${process.env.REACT_APP_API_URL}/auth/register`,
-      { email, password },
-    );
+    const response = await apiClient.post("/auth/register", {
+      email,
+      password,
+    });
     if (response.data.token) {
       localStorage.setItem("token", response.data.token);
       setUser(response.data.user);
@@ -87,16 +81,16 @@ export const AuthProvider = ({ children }) => {
       // If profile data provided, update profile after registration
       if (profileData && Object.keys(profileData).length > 0) {
         try {
-          await axios.put(
-            `${process.env.REACT_APP_API_URL}/users/profile/${response.data.user.id}`,
+          await apiClient.put(
+            `/users/profile/${response.data.user.id}`,
             profileData,
             {
               headers: { Authorization: `Bearer ${response.data.token}` },
             },
           );
           // Fetch updated profile
-          const profileResponse = await axios.get(
-            `${process.env.REACT_APP_API_URL}/users/profile/${response.data.user.id}`,
+          const profileResponse = await apiClient.get(
+            `/users/profile/${response.data.user.id}`,
             {
               headers: { Authorization: `Bearer ${response.data.token}` },
             },
