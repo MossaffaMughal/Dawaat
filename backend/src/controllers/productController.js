@@ -205,14 +205,35 @@ export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Check if product exists
+    const productCheck = await pool.query(
+      "SELECT id FROM products WHERE id = $1",
+      [id],
+    );
+
+    if (productCheck.rows.length === 0) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Check if product is in any active orders (pending, processing, shipped)
+    const activeOrdersCheck = await pool.query(
+      `SELECT COUNT(*) as count FROM order_items oi
+       JOIN orders o ON oi.order_id = o.id
+       WHERE oi.product_id = $1 AND o.status IN ('pending', 'processing', 'shipped')`,
+      [id],
+    );
+
+    if (parseInt(activeOrdersCheck.rows[0].count, 10) > 0) {
+      return res.status(400).json({
+        message: "Cannot delete product: it is part of active orders",
+      });
+    }
+
+    // Safe to delete: removes from product_images (cascade), wishlist (cascade), and orphaned cart/order items
     const result = await pool.query(
       "DELETE FROM products WHERE id = $1 RETURNING id",
       [id],
     );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: "Product not found" });
-    }
 
     res.json({ message: "Product deleted successfully" });
   } catch (error) {

@@ -396,7 +396,9 @@ const AdminDashboard = () => {
           showNotification("Product deleted successfully", "success");
         } catch (error) {
           console.error("Error deleting product:", error);
-          showNotification("Error deleting product", "error");
+          const errorMessage =
+            error.response?.data?.message || "Error deleting product";
+          showNotification(errorMessage, "error");
         }
       },
     });

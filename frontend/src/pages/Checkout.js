@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 import apiClient from "../utils/apiClient";
 import "../styles/Checkout.css";
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { clearCart } = useCart();
   const [notification, setNotification] = useState(null);
+  const [successDialog, setSuccessDialog] = useState({
+    isOpen: false,
+    orderNumber: "",
+    copied: false,
+  });
   const [formData, setFormData] = useState({
     customerName: user?.name || "",
     customerEmail: user?.email || "",
@@ -73,21 +80,38 @@ const Checkout = () => {
 
       const response = await apiClient.post("/orders", orderData);
 
-      // Clear cart and checkout data
+      const orderNumber = response.data.order.order_number;
+
+      // Clear cart from context and localStorage
+      clearCart();
       localStorage.removeItem("cart");
       localStorage.removeItem("checkoutData");
 
-      showNotification(
-        `✓ Order placed successfully! Order #: ${response.data.order.order_number}`,
-        "success",
-      );
-      setTimeout(() => navigate("/"), 1500);
+      // Show success dialog with order number
+      setSuccessDialog({
+        isOpen: true,
+        orderNumber: orderNumber,
+        copied: false,
+      });
     } catch (error) {
       console.error("Error placing order:", error);
       showNotification("Error placing order. Please try again.", "error");
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyOrderNumber = () => {
+    navigator.clipboard.writeText(successDialog.orderNumber);
+    setSuccessDialog((prev) => ({ ...prev, copied: true }));
+    setTimeout(() => {
+      setSuccessDialog((prev) => ({ ...prev, copied: false }));
+    }, 2000);
+  };
+
+  const handleSuccessDialogOK = () => {
+    setSuccessDialog({ isOpen: false, orderNumber: "", copied: false });
+    navigate("/");
   };
 
   if (!checkoutData.items) {
@@ -259,6 +283,41 @@ const Checkout = () => {
         <div className={`toast-notification toast-${notification.type}`}>
           <div className="toast-content">
             <span className="toast-message">{notification.message}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Order Success Dialog */}
+      {successDialog.isOpen && (
+        <div className="success-dialog-overlay">
+          <div className="success-dialog">
+            <div className="success-dialog-icon">✓</div>
+            <h2>Order Placed Successfully!</h2>
+            <p className="success-message">
+              Your order has been placed successfully. Your order number is:
+            </p>
+            <div className="order-number-section">
+              <div className="order-number-display">
+                <strong>{successDialog.orderNumber}</strong>
+              </div>
+              <button
+                className="copy-button"
+                onClick={copyOrderNumber}
+                title="Copy order number"
+              >
+                {successDialog.copied ? "✓ Copied!" : "📋 Copy"}
+              </button>
+            </div>
+            <p className="order-info">
+              You will receive a confirmation email shortly with your order
+              details.
+            </p>
+            <button
+              className="success-dialog-ok-button"
+              onClick={handleSuccessDialogOK}
+            >
+              Continue Shopping
+            </button>
           </div>
         </div>
       )}
