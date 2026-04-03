@@ -5,21 +5,44 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const connectionString = process.env.DATABASE_URL?.trim();
-const dbHost = process.env.DB_HOST;
+const dbHost = process.env.DB_HOST?.trim();
+const dbPort = process.env.DB_PORT || 5432;
+const dbName = process.env.DB_NAME || "postgres";
+const dbUser = process.env.DB_USER?.trim();
+const dbPassword = process.env.DB_PASSWORD;
+const supabaseUrl = process.env.SUPABASE_URL?.trim();
+
+let derivedConnectionString = null;
+if (!connectionString && supabaseUrl && dbPassword) {
+  try {
+    const supabaseHost = new URL(supabaseUrl).host;
+    const projectRef = supabaseHost.split(".")[0];
+    if (projectRef) {
+      const derivedHost = `db.${projectRef}.supabase.co`;
+      const derivedUser = dbUser || "postgres";
+      const encodedPassword = encodeURIComponent(dbPassword);
+      derivedConnectionString = `postgresql://${derivedUser}:${encodedPassword}@${derivedHost}:${dbPort}/${dbName}`;
+    }
+  } catch {
+    // Keep config unchanged if SUPABASE_URL is malformed.
+  }
+}
+
+const finalConnectionString = connectionString || derivedConnectionString;
 const explicitSsl = process.env.DB_SSL;
 const shouldUseSsl = explicitSsl
   ? explicitSsl.toLowerCase() === "true"
   : Boolean(
       dbHost?.includes("supabase.com") ||
       dbHost?.includes("supabase.co") ||
-      connectionString?.includes("supabase.co") ||
-      connectionString?.includes("supabase.com") ||
+      finalConnectionString?.includes("supabase.co") ||
+      finalConnectionString?.includes("supabase.com") ||
       process.env.NODE_ENV === "production",
     );
 
-const poolConfig = connectionString
+const poolConfig = finalConnectionString
   ? {
-      connectionString,
+      connectionString: finalConnectionString,
       ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
       max: 20,
       idleTimeoutMillis: 30000,
@@ -27,10 +50,10 @@ const poolConfig = connectionString
     }
   : {
       host: dbHost,
-      port: process.env.DB_PORT || 5432,
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
+      port: dbPort,
+      database: dbName,
+      user: dbUser,
+      password: dbPassword,
       ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
       max: 20,
       idleTimeoutMillis: 30000,
