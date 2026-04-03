@@ -26,9 +26,16 @@ export const ensureDatabaseSchema = async () => {
       price INTEGER NOT NULL,
       category VARCHAR(100) NOT NULL,
       in_stock BOOLEAN DEFAULT true,
+      stock_quantity INTEGER DEFAULT 999,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+  `);
+
+  // Add stock_quantity column if it doesn't exist (migration for existing databases)
+  await pool.query(`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS stock_quantity INTEGER DEFAULT 999;
   `);
 
   await pool.query(`
