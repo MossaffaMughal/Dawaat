@@ -2,8 +2,6 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import multer from "multer";
-import path from "path";
-import { fileURLToPath } from "url";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
@@ -11,14 +9,25 @@ import orderRoutes from "./routes/orderRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
+import { initStorage, testSupabaseConnection } from "./config/supabase.js";
+import { uploadImage } from "./services/uploadService.js";
+import { testDatabaseConnection } from "./config/database.js";
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+if (process.env.NODE_ENV !== "production") {
+  const init = async () => {
+    console.log("\n🔧 Initializing Dawaat Backend...");
+    await testSupabaseConnection();
+    await testDatabaseConnection();
+    await initStorage();
+    console.log("✅ All systems ready!\n");
+  };
+  init();
+}
 
 // Middleware
 app.use(
@@ -30,24 +39,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files for uploaded products
-app.use(
-  "/products",
-  express.static(path.join(__dirname, "../public/products")),
-);
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, "../public/products");
-    console.log("📁 Multer upload directory:", uploadDir);
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   const allowedMimes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
@@ -61,7 +53,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
 // Routes
@@ -73,53 +65,39 @@ app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/contacts", contactRoutes);
 app.use("/api/reviews", reviewRoutes);
 
-// Image upload endpoint
-app.post("/api/upload", (req, res) => {
-  console.log("\n========== IMAGE UPLOAD REQUEST RECEIVED ==========");
-  console.log("Time:", new Date().toISOString());
-  console.log("Headers:", req.headers);
+app.post("/api/upload", upload.single("image"), async (req, res) => {
+  console.log("\n========== IMAGE UPLOAD TO SUPABASE ==========");
 
-  upload.single("image")(req, res, (err) => {
-    if (err) {
-      console.error("\n!!! UPLOAD ERROR !!!");
-      console.error("Error message:", err.message);
-      console.error("Error code:", err.code);
-      console.error("Full error:", err);
-      console.error("=========================================\n");
-
-      return res.status(400).json({
-        message: "Upload failed",
-        error: err.message || err,
-      });
-    }
-
+  try {
     if (!req.file) {
-      console.error("\n!!! NO FILE RECEIVED !!!");
-      console.error("Request body:", req.body);
-      console.error("Request files:", req.files);
-      console.error("=========================================\n");
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const imageUrl = `/products/${req.file.filename}`;
-    console.log("=== FILE UPLOADED SUCCESSFULLY ===");
-    console.log("Filename:", req.file.filename);
-    console.log("Size:", req.file.size);
-    console.log("Mimetype:", req.file.mimetype);
-    console.log("Image URL:", imageUrl);
-    console.log("=========================================\n");
+    const result = await uploadImage(req.file);
 
+    if (!result.success) {
+      console.error("Upload failed:", result.error);
+      return res.status(500).json({ message: result.error });
+    }
+
+    console.log("✅ Image uploaded:", result.url);
     res.json({
       message: "File uploaded successfully",
-      imageUrl,
-      filename: req.file.filename,
+      imageUrl: result.url,
+      filename: result.fileName,
     });
-  });
+  } catch (error) {
+    console.error("Upload error:", error);
+    res.status(500).json({ message: error.message });
+  }
 });
 
 // Health check
 app.get("/api/health", (req, res) => {
-  res.json({ status: "OK" });
+  res.json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Global error handler

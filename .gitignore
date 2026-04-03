@@ -18,3 +18,5 @@ out
 *~
 .vscode
 .idea
+backend/public/products/*
+!backend/public/products/.gitkeep
