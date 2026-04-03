@@ -11,10 +11,10 @@ const shouldUseSsl = explicitSsl
   ? explicitSsl.toLowerCase() === "true"
   : Boolean(
       dbHost?.includes("supabase.com") ||
-        dbHost?.includes("supabase.co") ||
-        connectionString?.includes("supabase.co") ||
-        connectionString?.includes("supabase.com") ||
-        process.env.NODE_ENV === "production",
+      dbHost?.includes("supabase.co") ||
+      connectionString?.includes("supabase.co") ||
+      connectionString?.includes("supabase.com") ||
+      process.env.NODE_ENV === "production",
     );
 
 const poolConfig = connectionString
