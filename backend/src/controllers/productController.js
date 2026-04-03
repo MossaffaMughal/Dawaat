@@ -227,9 +227,26 @@ export const addProductImage = async (req, res) => {
   try {
     const { productId, imageUrl, altText, displayOrder } = req.body;
 
+    if (!imageUrl) {
+      return res.status(400).json({ message: "imageUrl is required" });
+    }
+
+    const normalizedUrl = String(imageUrl).trim();
+    const isLocalProductsPath =
+      normalizedUrl.includes("localhost:5000/products/") ||
+      normalizedUrl.startsWith("/products/") ||
+      normalizedUrl.includes("127.0.0.1:5000/products/");
+
+    if (isLocalProductsPath) {
+      return res.status(400).json({
+        message:
+          "Local product image URLs are not allowed. Upload images through Supabase and use the returned public URL.",
+      });
+    }
+
     const result = await pool.query(
       "INSERT INTO product_images (product_id, image_url, alt_text, display_order) VALUES ($1, $2, $3, $4) RETURNING *",
-      [productId, imageUrl, altText, displayOrder || 0],
+      [productId, normalizedUrl, altText, displayOrder || 0],
     );
 
     res.status(201).json({

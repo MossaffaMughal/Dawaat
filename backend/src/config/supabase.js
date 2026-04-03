@@ -5,7 +5,10 @@ dotenv.config();
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-const hasSupabaseCredentials = Boolean(supabaseUrl && supabaseAnonKey);
+const supabaseServiceKey =
+  process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const storageKey = supabaseServiceKey || supabaseAnonKey;
+const hasSupabaseCredentials = Boolean(supabaseUrl && storageKey);
 
 if (!hasSupabaseCredentials) {
   console.warn(
@@ -14,7 +17,12 @@ if (!hasSupabaseCredentials) {
 }
 
 export const supabase = hasSupabaseCredentials
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, storageKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
   : null;
 
 export const isSupabaseConfigured = () => hasSupabaseCredentials;
