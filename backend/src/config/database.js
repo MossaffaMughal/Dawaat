@@ -12,14 +12,40 @@ const dbUser = process.env.DB_USER?.trim();
 const dbPassword = process.env.DB_PASSWORD;
 const supabaseUrl = process.env.SUPABASE_URL?.trim();
 
+let projectRef = null;
+if (supabaseUrl) {
+  try {
+    projectRef = new URL(supabaseUrl).host.split(".")[0] || null;
+  } catch {
+    projectRef = null;
+  }
+}
+
+let normalizedHost = dbHost;
+let normalizedUser = dbUser;
+
+if (projectRef && normalizedHost?.startsWith(`db.${projectRef}.supabase.co`)) {
+  if (normalizedUser?.startsWith("postgres.")) {
+    normalizedUser = "postgres";
+  }
+}
+
+if (projectRef && normalizedHost?.includes("pooler.supabase.com")) {
+  if (normalizedUser === "postgres") {
+    normalizedUser = `postgres.${projectRef}`;
+  }
+}
+
+const hasDiscreteDbConfig = Boolean(normalizedHost && normalizedUser && dbPassword);
+
 let derivedConnectionString = null;
-if (!connectionString && supabaseUrl && dbPassword) {
+if (!hasDiscreteDbConfig && !connectionString && supabaseUrl && dbPassword) {
   try {
     const supabaseHost = new URL(supabaseUrl).host;
-    const projectRef = supabaseHost.split(".")[0];
-    if (projectRef) {
-      const derivedHost = `db.${projectRef}.supabase.co`;
-      const derivedUser = dbUser || "postgres";
+    const derivedProjectRef = supabaseHost.split(".")[0];
+    if (derivedProjectRef) {
+      const derivedHost = `db.${derivedProjectRef}.supabase.co`;
+      const derivedUser = normalizedUser || "postgres";
       const encodedPassword = encodeURIComponent(dbPassword);
       derivedConnectionString = `postgresql://${derivedUser}:${encodedPassword}@${derivedHost}:${dbPort}/${dbName}`;
     }
@@ -28,7 +54,10 @@ if (!connectionString && supabaseUrl && dbPassword) {
   }
 }
 
-const finalConnectionString = connectionString || derivedConnectionString;
+const finalConnectionString =
+  !hasDiscreteDbConfig && (connectionString || derivedConnectionString)
+    ? connectionString || derivedConnectionString
+    : null;
 const explicitSsl = process.env.DB_SSL;
 const shouldUseSsl = explicitSsl
   ? explicitSsl.toLowerCase() === "true"
@@ -49,10 +78,10 @@ const poolConfig = finalConnectionString
       connectionTimeoutMillis: 5000,
     }
   : {
-      host: dbHost,
+      host: normalizedHost,
       port: dbPort,
       database: dbName,
-      user: dbUser,
+      user: normalizedUser,
       password: dbPassword,
       ssl: shouldUseSsl ? { rejectUnauthorized: false } : false,
       max: 20,
