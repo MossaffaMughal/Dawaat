@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { useAuth } from "./AuthContext";
 import apiClient from "../utils/apiClient";
 
@@ -10,6 +16,12 @@ export const WishlistProvider = ({ children }) => {
   const [wishlistIds, setWishlistIds] = useState(new Set());
 
   const fetchWishlist = useCallback(async () => {
+    if (!user) {
+      setWishlist([]);
+      setWishlistIds(new Set());
+      return;
+    }
+
     try {
       // Get wishlist product IDs
       const wishlistResponse = await apiClient.get(`/wishlist/${user.id}`);
@@ -40,7 +52,11 @@ export const WishlistProvider = ({ children }) => {
         console.error("Fallback wishlist fetch also failed:", fallbackError);
       }
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchWishlist();
+  }, [fetchWishlist]);
 
   const addToWishlist = async (productId) => {
     if (!user) {

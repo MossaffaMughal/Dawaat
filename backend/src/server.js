@@ -135,11 +135,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`\n✅ Server running on port ${PORT}`);
-  console.log(
-    `✅ Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:3000"}`,
-  );
-  console.log(`✅ Node ENV: ${process.env.NODE_ENV || "development"}\n`);
-});
+// ✅ EXPORT for Vercel (serverless function)
+export default app;
+
+// ✅ Only listen locally (not on Vercel)
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`\n✅ Server running on port ${PORT}`);
+    console.log(
+      `✅ Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:3000"}`,
+    );
+    console.log(`✅ Node ENV: ${process.env.NODE_ENV || "development"}\n`);
+  });
+}
