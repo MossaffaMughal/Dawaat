@@ -11,6 +11,7 @@ const API_URL = configuredApiUrl.endsWith("/api")
 
 export const apiClient = axios.create({
   baseURL: API_URL,
+  withCredentials: true,
 });
 
 apiClient.interceptors.request.use((config) => {

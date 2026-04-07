@@ -51,14 +51,31 @@ const isAllowedFrontendOrigin = (origin) => {
   if (!origin) return true;
   const normalizedOrigin = normalizeOrigin(origin);
 
-  if (normalizedOrigin === "http://localhost:3000") return true;
-  if (productionOrigins.has(normalizedOrigin)) return true;
-  if (configuredFrontendOrigins.includes(normalizedOrigin)) return true;
+  const isLocalhost = normalizedOrigin === "http://localhost:3000";
+  const isProduction = productionOrigins.has(normalizedOrigin);
+  const isConfigured = configuredFrontendOrigins.includes(normalizedOrigin);
+  const isVercelPreview =
+    /^https:\/\/dawaat-frontend(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(
+      normalizedOrigin,
+    );
 
-  // Allow Vercel preview deployments for this frontend project.
-  return /^https:\/\/dawaat-frontend(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(
-    normalizedOrigin,
-  );
+  const allowed =
+    isLocalhost || isProduction || isConfigured || isVercelPreview;
+
+  if (process.env.NODE_ENV === "development" && !allowed) {
+    console.log(`[CORS] Origin check:`, {
+      origin,
+      normalizedOrigin,
+      isLocalhost,
+      isProduction,
+      isConfigured,
+      isVercelPreview,
+      allowed,
+      configuredOrigins: configuredFrontendOrigins,
+    });
+  }
+
+  return allowed;
 };
 
 app.use(
@@ -70,6 +87,10 @@ app.use(
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    exposedHeaders: ["Content-Length", "X-JSON-Response"],
+    maxAge: 86400,
   }),
 );
 app.use(express.json());
