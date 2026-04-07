@@ -29,19 +29,35 @@ const initPromise = (async () => {
 })();
 
 // Middleware
-const configuredFrontendOrigins = (process.env.FRONTEND_URL || "")
+const normalizeOrigin = (value) =>
+  value.trim().toLowerCase().replace(/\/+$/, "");
+
+const configuredFrontendOrigins = [
+  process.env.FRONTEND_URL || "",
+  process.env.CORS_ORIGIN || "",
+]
+  .join(",")
   .split(",")
   .map((origin) => origin.trim())
-  .filter(Boolean);
+  .filter(Boolean)
+  .map(normalizeOrigin);
+
+const productionOrigins = new Set([
+  "https://dawaat.pk",
+  "https://www.dawaat.pk",
+]);
 
 const isAllowedFrontendOrigin = (origin) => {
   if (!origin) return true;
-  if (origin === "http://localhost:3000") return true;
-  if (configuredFrontendOrigins.includes(origin)) return true;
+  const normalizedOrigin = normalizeOrigin(origin);
+
+  if (normalizedOrigin === "http://localhost:3000") return true;
+  if (productionOrigins.has(normalizedOrigin)) return true;
+  if (configuredFrontendOrigins.includes(normalizedOrigin)) return true;
 
   // Allow Vercel preview deployments for this frontend project.
   return /^https:\/\/dawaat-frontend(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(
-    origin,
+    normalizedOrigin,
   );
 };
 

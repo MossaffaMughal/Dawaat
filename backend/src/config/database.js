@@ -5,13 +5,28 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const connectionString = process.env.DATABASE_URL?.trim();
+const hasLegacyDbConfig =
+  process.env.DB_HOST &&
+  process.env.DB_PORT &&
+  process.env.DB_NAME &&
+  process.env.DB_USER;
+
+const legacyConnectionString = hasLegacyDbConfig
+  ? `postgresql://${encodeURIComponent(process.env.DB_USER)}:${encodeURIComponent(
+      process.env.DB_PASSWORD || "",
+    )}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`
+  : null;
+
+const resolvedConnectionString = connectionString || legacyConnectionString;
 const supabaseUrl = process.env.SUPABASE_URL?.trim();
 const poolerHost =
   process.env.SUPABASE_POOLER_HOST?.trim() ||
   "aws-0-eu-west-1.pooler.supabase.com";
 
-if (!connectionString) {
-  throw new Error("DATABASE_URL is required");
+if (!resolvedConnectionString) {
+  throw new Error(
+    "Database config missing. Set DATABASE_URL or DB_HOST, DB_PORT, DB_NAME, DB_USER.",
+  );
 }
 
 let projectRef = null;
@@ -54,7 +69,9 @@ const normalizeConnectionString = (rawConnectionString) => {
   }
 };
 
-const finalConnectionString = normalizeConnectionString(connectionString);
+const finalConnectionString = normalizeConnectionString(
+  resolvedConnectionString,
+);
 const explicitSsl = process.env.DB_SSL;
 const shouldUseSsl = explicitSsl
   ? explicitSsl.toLowerCase() === "true"
