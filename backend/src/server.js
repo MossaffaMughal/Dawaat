@@ -62,16 +62,17 @@ const isAllowedFrontendOrigin = (origin) => {
   const allowed =
     isLocalhost || isProduction || isConfigured || isVercelPreview;
 
-  if (process.env.NODE_ENV === "development" && !allowed) {
-    console.log(`[CORS] Origin check:`, {
+  // Log all origin checks for debugging deployment issues
+  if (!allowed) {
+    console.warn(`[CORS] ⚠️ Origin REJECTED:`, {
       origin,
       normalizedOrigin,
       isLocalhost,
       isProduction,
       isConfigured,
       isVercelPreview,
-      allowed,
       configuredOrigins: configuredFrontendOrigins,
+      productionOrigins: Array.from(productionOrigins),
     });
   }
 
@@ -81,16 +82,25 @@ const isAllowedFrontendOrigin = (origin) => {
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (isAllowedFrontendOrigin(origin)) {
+      const allowed = isAllowedFrontendOrigin(origin);
+      if (allowed) {
+        console.log(`[CORS] ✅ Origin ALLOWED:`, origin);
         return callback(null, true);
       }
+      console.error(`[CORS] ❌ Origin BLOCKED:`, origin);
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+      "Accept-Language",
+    ],
     exposedHeaders: ["Content-Length", "X-JSON-Response"],
-    maxAge: 86400,
+    maxAge: 3600,
   }),
 );
 app.use(express.json());
@@ -182,6 +192,15 @@ app.use((err, req, res, next) => {
 
 // ✅ EXPORT for Vercel (serverless function)
 export default app;
+
+// Startup logging - show CORS configuration
+console.log("\n========== CORS CONFIGURATION ==========");
+console.log("Production Origins:", Array.from(productionOrigins));
+console.log("Configured Origins:", configuredFrontendOrigins);
+console.log("FRONTEND_URL env:", process.env.FRONTEND_URL);
+console.log("CORS_ORIGIN env:", process.env.CORS_ORIGIN);
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("=====================================\n");
 
 // ✅ Only listen locally (not on Vercel)
 if (process.env.NODE_ENV !== "production") {
