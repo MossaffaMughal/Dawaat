@@ -4,7 +4,17 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const connectionString = process.env.DATABASE_URL?.trim();
+const firstDefined = (...values) =>
+  values.map((value) => value?.trim()).find(Boolean) || null;
+
+const connectionString = firstDefined(
+  process.env.DATABASE_URL,
+  process.env.POSTGRES_URL_NON_POOLING,
+  process.env.POSTGRES_URL,
+  process.env.SUPABASE_DB_URL,
+  process.env.SUPABASE_POSTGRES_URL,
+);
+
 const hasLegacyDbConfig =
   process.env.DB_HOST &&
   process.env.DB_PORT &&
@@ -23,9 +33,25 @@ const poolerHost =
   process.env.SUPABASE_POOLER_HOST?.trim() ||
   "aws-0-eu-west-1.pooler.supabase.com";
 
+const connectionSource = connectionString
+  ? process.env.DATABASE_URL?.trim()
+    ? "DATABASE_URL"
+    : process.env.POSTGRES_URL_NON_POOLING?.trim()
+      ? "POSTGRES_URL_NON_POOLING"
+      : process.env.POSTGRES_URL?.trim()
+        ? "POSTGRES_URL"
+        : process.env.SUPABASE_DB_URL?.trim()
+          ? "SUPABASE_DB_URL"
+          : process.env.SUPABASE_POSTGRES_URL?.trim()
+            ? "SUPABASE_POSTGRES_URL"
+            : "UNKNOWN"
+  : hasLegacyDbConfig
+    ? "DB_HOST/DB_PORT/DB_NAME/DB_USER"
+    : null;
+
 if (!resolvedConnectionString) {
   throw new Error(
-    "Database config missing. Set DATABASE_URL or DB_HOST, DB_PORT, DB_NAME, DB_USER.",
+    "Database config missing. Set DATABASE_URL, POSTGRES_URL, POSTGRES_URL_NON_POOLING, SUPABASE_DB_URL, or legacy DB_HOST, DB_PORT, DB_NAME, DB_USER.",
   );
 }
 
@@ -72,6 +98,12 @@ const normalizeConnectionString = (rawConnectionString) => {
 const finalConnectionString = normalizeConnectionString(
   resolvedConnectionString,
 );
+
+if (process.env.NODE_ENV !== "test") {
+  console.log(
+    `📦 Database source: ${connectionSource || "unresolved"} | mode=${process.env.NODE_ENV || "development"}`,
+  );
+}
 const explicitSsl = process.env.DB_SSL;
 const shouldUseSsl = explicitSsl
   ? explicitSsl.toLowerCase() === "true"

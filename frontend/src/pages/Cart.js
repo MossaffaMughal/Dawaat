@@ -1,12 +1,30 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useCart } from "../context/CartContext";
 import { Link } from "react-router-dom";
+import apiClient from "../utils/apiClient";
 import "../styles/Cart.css";
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity, getTotalPrice, clearCart } =
     useCart();
   const totalPrice = getTotalPrice();
+  const [shippingCost, setShippingCost] = useState(250);
+
+  useEffect(() => {
+    const fetchShippingCost = async () => {
+      try {
+        const response = await apiClient.get("/orders/shipping/cost");
+        setShippingCost(Number(response.data.shippingCost) || 0);
+      } catch (error) {
+        console.error("Error fetching shipping cost:", error);
+        setShippingCost(250);
+      }
+    };
+
+    fetchShippingCost();
+  }, []);
+
+  const grandTotal = totalPrice + shippingCost;
 
   const handleCheckout = async () => {
     if (cart.length === 0) {
@@ -100,7 +118,7 @@ const Cart = () => {
             </div>
             <div className="summary-row">
               <span>Shipping:</span>
-              <span>Rs. 0</span>
+              <span>Rs. {shippingCost.toFixed(2)}</span>
             </div>
             <div className="summary-row">
               <span>Tax:</span>
@@ -108,7 +126,7 @@ const Cart = () => {
             </div>
             <div className="summary-total">
               <span>Total:</span>
-              <span>Rs. {totalPrice.toFixed(2)}</span>
+              <span>Rs. {grandTotal.toFixed(2)}</span>
             </div>
 
             <button className="checkout-btn" onClick={handleCheckout}>

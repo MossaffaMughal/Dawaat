@@ -107,6 +107,42 @@ export const ensureDatabaseSchema = async () => {
   `);
 
   await pool.query(`
+    ALTER TABLE order_items
+    ALTER COLUMN product_id DROP NOT NULL;
+  `);
+
+  await pool.query(`
+    DO $$
+    DECLARE
+      fk_name text;
+    BEGIN
+      SELECT tc.constraint_name
+      INTO fk_name
+      FROM information_schema.table_constraints tc
+      WHERE tc.table_schema = 'public'
+        AND tc.table_name = 'order_items'
+        AND tc.constraint_type = 'FOREIGN KEY'
+        AND tc.constraint_name LIKE '%product_id%';
+
+      IF fk_name IS NOT NULL THEN
+        EXECUTE format('ALTER TABLE order_items DROP CONSTRAINT %I', fk_name);
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.table_constraints tc
+        WHERE tc.table_schema = 'public'
+          AND tc.table_name = 'order_items'
+          AND tc.constraint_name = 'order_items_product_id_fkey'
+      ) THEN
+        ALTER TABLE order_items
+        ADD CONSTRAINT order_items_product_id_fkey
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL;
+      END IF;
+    END $$;
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS contacts (
       id SERIAL PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
