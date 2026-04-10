@@ -5,7 +5,10 @@ export const getAllProducts = async (req, res) => {
     const { category, search, minPrice, maxPrice, sortBy } = req.query;
     let query = `
       SELECT p.*, 
-             json_agg(json_build_object('id', pi.id, 'image_url', pi.image_url, 'alt_text', pi.alt_text, 'display_order', pi.display_order)) 
+             json_agg(
+               json_build_object('id', pi.id, 'image_url', pi.image_url, 'alt_text', pi.alt_text, 'display_order', pi.display_order)
+               ORDER BY pi.display_order ASC, pi.id ASC
+             ) 
              FILTER (WHERE pi.id IS NOT NULL) as images
       FROM products p
       LEFT JOIN product_images pi ON p.id = pi.product_id
@@ -71,7 +74,10 @@ export const getProductById = async (req, res) => {
 
     const result = await pool.query(
       `SELECT p.*, 
-              json_agg(json_build_object('id', pi.id, 'image_url', pi.image_url, 'alt_text', pi.alt_text, 'display_order', pi.display_order)) 
+              json_agg(
+                json_build_object('id', pi.id, 'image_url', pi.image_url, 'alt_text', pi.alt_text, 'display_order', pi.display_order)
+                ORDER BY pi.display_order ASC, pi.id ASC
+              ) 
               FILTER (WHERE pi.id IS NOT NULL) as images
        FROM products p
        LEFT JOIN product_images pi ON p.id = pi.product_id

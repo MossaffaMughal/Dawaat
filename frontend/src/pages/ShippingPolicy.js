@@ -21,13 +21,6 @@ const ShippingPolicy = () => {
             <li>
               <strong>Standard Shipping:</strong> Typically 5-7 business days
             </li>
-            <li>
-              <strong>Express Shipping:</strong> Typically 2-3 business days
-              (where available)
-            </li>
-            <li>
-              <strong>Local Pickup:</strong> Available in selected locations
-            </li>
           </ul>
         </section>
 
@@ -39,21 +32,16 @@ const ShippingPolicy = () => {
             additional time.
           </p>
           <p>
-            Once your order ships, you'll receive a tracking number via email so
-            you can monitor delivery progress.
+            Once your order ships, you'll receive a tracking number so you can
+            monitor delivery progress.
           </p>
         </section>
 
         <section className="policy-section">
           <h2>🌍 Shipping Locations</h2>
           <p>
-            We currently ship within Pakistan and internationally. Shipping
-            costs and delivery times vary by location.
-          </p>
-          <p>
-            For international orders, additional customs duties or import taxes
-            may apply based on your country's regulations. The buyer is
-            responsible for these additional costs.
+            We currently ship within Pakistan. Shipping costs and delivery times
+            vary by location.
           </p>
         </section>
 
@@ -65,9 +53,9 @@ const ShippingPolicy = () => {
             addresses if they were delivered as instructed.
           </p>
           <p>
-            If you need to change your address, contact us immediately at{" "}
-            <strong>dawaat.pk@gmail.com</strong> within 24 hours of placing your
-            order. order.
+            If you need to change your address, contact us immediately on
+            WhatsApp at <strong>+92 335 4023791</strong> within 24 hours of
+            placing your order.
           </p>
         </section>
 
@@ -79,7 +67,7 @@ const ShippingPolicy = () => {
             investigate and work with our shipping partner to resolve the issue.
           </p>
           <p>
-            Claims for lost or damaged packages must be reported within 7 days
+            Claims for lost or damaged packages must be reported within 3 days
             of the expected delivery date.
           </p>
         </section>
@@ -96,7 +84,7 @@ const ShippingPolicy = () => {
         <section className="policy-section">
           <h2>❓ Questions?</h2>
           <p>
-            For any shipping-related inquiries, please reach out to us at
+            For any shipping-related inquiries, please reach out to us at{" "}
             <strong>dawaat.pk@gmail.com</strong>. We're here to help!
           </p>
         </section>

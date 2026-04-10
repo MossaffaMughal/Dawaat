@@ -3,17 +3,19 @@
 }
 
 .about-header {
-  background-color: var(--light-bg);
-  padding: 60px 20px;
+  background-color: #fdf1f4;
+  padding: 45px 20px;
   text-align: center;
   border-bottom: 2px solid var(--primary-color);
 }
 
 .about-header h1 {
-  font-size: 32px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.45;
+  max-width: 980px;
+  margin: 0 auto;
   color: var(--primary-color);
-  margin-bottom: 10px;
 }
 
 .about-header p {
@@ -114,7 +116,8 @@
 /* Mobile */
 @media (max-width: 768px) {
   .about-header h1 {
-    font-size: 24px;
+    font-size: 18px;
+    line-height: 1.4;
   }
 
   .about-header p {
@@ -145,11 +148,11 @@
 
 @media (max-width: 480px) {
   .about-header {
-    padding: 40px 15px;
+    padding: 32px 15px;
   }
 
   .about-header h1 {
-    font-size: 20px;
+    font-size: 16px;
   }
 
   .about-content {

@@ -39,7 +39,8 @@ const ReviewController = {
   getProductReviews: async (req, res) => {
     try {
       const { productId } = req.params;
-      const reviews = await ReviewModel.getProductReviews(productId);
+      const limit = req.query.limit ? parseInt(req.query.limit, 10) : undefined;
+      const reviews = await ReviewModel.getProductReviews(productId, limit);
       res.json(reviews);
     } catch (error) {
       console.error("Error fetching reviews:", error);
@@ -55,6 +56,18 @@ const ReviewController = {
     } catch (error) {
       console.error("Error fetching reviews:", error);
       res.status(500).json({ message: "Error fetching reviews" });
+    }
+  },
+
+  // Get recent reviews (public)
+  getRecentReviews: async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit, 10) : 6;
+      const reviews = await ReviewModel.getRecentReviews(limit);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching recent reviews:", error);
+      res.status(500).json({ message: "Error fetching recent reviews" });
     }
   },
 

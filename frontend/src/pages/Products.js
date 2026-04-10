@@ -4,6 +4,7 @@ import { useCart } from "../context/CartContext";
 import { Link, useSearchParams } from "react-router-dom";
 import "../styles/Products.css";
 import ProductCard from "../components/ProductCard";
+import HomeReviewsSection from "../components/HomeReviewsSection";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -19,9 +20,16 @@ const Products = () => {
 
   useEffect(() => {
     const categoryParam = searchParams.get("category");
-    if (categoryParam) {
-      setFilter(categoryParam);
-    }
+    const searchParam = searchParams.get("search");
+    const minPriceParam = searchParams.get("minPrice");
+    const maxPriceParam = searchParams.get("maxPrice");
+    const sortByParam = searchParams.get("sortBy");
+
+    setFilter(categoryParam || "all");
+    setSearch(searchParam || "");
+    setMinPrice(minPriceParam || "");
+    setMaxPrice(maxPriceParam || "");
+    setSortBy(sortByParam || "newest");
   }, [searchParams]);
 
   useEffect(() => {
@@ -215,6 +223,8 @@ const Products = () => {
           )}
         </main>
       </div>
+
+      <HomeReviewsSection />
 
       {notification && (
         <div className="toast-notification-simple">{notification}</div>

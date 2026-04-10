@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from "react";
 import apiClient from "../utils/apiClient";
+import ConfirmDialog from "../components/ConfirmDialog";
 import "../styles/AdminReviews.css";
 
 const AdminReviews = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [statusMessage, setStatusMessage] = useState(null);
+  const [statusType, setStatusType] = useState("success");
+  const [reviewToDelete, setReviewToDelete] = useState(null);
 
   useEffect(() => {
     fetchAllReviews();
@@ -25,15 +29,17 @@ const AdminReviews = () => {
   };
 
   const handleDeleteReview = async (reviewId) => {
-    if (window.confirm("Are you sure you want to delete this review?")) {
-      try {
-        await apiClient.delete(`/reviews/${reviewId}`);
-        setReviews(reviews.filter((r) => r.id !== reviewId));
-        alert("Review deleted successfully");
-      } catch (error) {
-        console.error("Error deleting review:", error);
-        alert("Failed to delete review");
-      }
+    try {
+      await apiClient.delete(`/reviews/${reviewId}`);
+      setReviews(reviews.filter((r) => r.id !== reviewId));
+      setStatusType("success");
+      setStatusMessage("Review deleted successfully.");
+      setTimeout(() => setStatusMessage(null), 3000);
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      setStatusType("error");
+      setStatusMessage("Failed to delete review.");
+      setTimeout(() => setStatusMessage(null), 3000);
     }
   };
 
@@ -73,6 +79,10 @@ const AdminReviews = () => {
         <p>Total Reviews: {reviews.length}</p>
       </div>
 
+      {statusMessage && (
+        <div className={`review-status ${statusType}`}>{statusMessage}</div>
+      )}
+
       {reviews.length === 0 ? (
         <div className="no-reviews">
           <p>No reviews yet</p>
@@ -107,7 +117,7 @@ const AdminReviews = () => {
                   <td className="action">
                     <button
                       className="delete-btn"
-                      onClick={() => handleDeleteReview(review.id)}
+                      onClick={() => setReviewToDelete(review.id)}
                     >
                       Delete
                     </button>
@@ -118,6 +128,21 @@ const AdminReviews = () => {
           </table>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={reviewToDelete !== null}
+        title="Delete Review"
+        message="Are you sure you want to delete this review?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDangerous={true}
+        onCancel={() => setReviewToDelete(null)}
+        onConfirm={async () => {
+          const targetReviewId = reviewToDelete;
+          setReviewToDelete(null);
+          await handleDeleteReview(targetReviewId);
+        }}
+      />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
@@ -9,10 +9,23 @@ const Header = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const cartCount = getTotalItems();
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const query = searchTerm.trim();
+
+    if (!query) {
+      navigate("/products");
+      return;
+    }
+
+    navigate(`/products?search=${encodeURIComponent(query)}`);
   };
 
   const getProfileImage = () => {
@@ -39,16 +52,18 @@ const Header = () => {
             <span className="brand-name">Dawaat</span>
           </Link>
 
-          <div className="search-container">
+          <form className="search-container" onSubmit={handleSearch}>
             <input
               type="text"
               placeholder="Search the store"
               className="search-input"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <button className="search-btn">
+            <button className="search-btn" type="submit" aria-label="Search">
               <i className="fas fa-search"></i>
             </button>
-          </div>
+          </form>
 
           <div className="header-icons">
             {user ? (

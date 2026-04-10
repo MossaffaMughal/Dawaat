@@ -22,7 +22,7 @@ const ReturnsRefunds = () => {
         <section className="policy-section">
           <h2>⏰ Return Window</h2>
           <p>
-            You have <strong>30 days from the date of delivery</strong> to
+            You have <strong>7 days from the date of delivery</strong> to
             initiate a return or exchange.
           </p>
           <p>
@@ -69,7 +69,7 @@ const ReturnsRefunds = () => {
             <li>Items with visible signs of use or damage</li>
             <li>Personalized or customized products</li>
             <li>Items without original packaging</li>
-            <li>Items outside the 30-day return window</li>
+            <li>Items outside the 7-day return window</li>
           </ul>
         </section>
 

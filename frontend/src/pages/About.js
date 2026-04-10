@@ -5,8 +5,11 @@ const About = () => {
   return (
     <div className="about-page">
       <div className="about-header">
-        <h1>دوات - Dawaat</h1>
-        <p>Where words meet warmth, and creativity flows!</p>
+        <h1>
+          Dawaat - a one woman design studio where creations meet nostalgia,
+          poetry meets, art, stories unfold over steaming cups of چائے and
+          metaphors melt into inkpots.
+        </h1>
       </div>
 
       <div className="about-content">
@@ -14,14 +17,16 @@ const About = () => {
           <h2>Welcome to Our Tribe</h2>
           <p>
             We're a tiny haven for writers, journalers, and dreamers like you.
-            =) At Dawaat, we brew love and care into every order, crafting cute
-            and quirky products that spark joy and inspire imagination.
+            =)
           </p>
           <p>
-            Dawaat was born from a passion for quality stationery and the belief
-            that everyday items can be extraordinary. We create premium journals
-            and bookmarks that inspire creativity and help people express their
-            individuality.
+            At Dawaat, we brew love and care into every order, crafting cute and
+            quirky products that spark joy and inspire imagination.
+          </p>
+          <p>
+            A small creative shop that caters artistic products like journals,
+            notebooks, bookmarks, etc for all that stays unsaid underneath the
+            pauses. =)
           </p>
         </section>
 
@@ -35,13 +40,6 @@ const About = () => {
             <li>
               <strong>Bookmarks</strong> to hold your place, and your heart
             </li>
-            <li>
-              Beautifully crafted A5 journals with smooth-finish, yellow pages
-            </li>
-            <li>
-              Spiral bound designs for effortless writing and page-turning
-            </li>
-            <li>Premium 100gsm paper with 70 pages (140 sides)</li>
           </ul>
         </section>
 
@@ -84,9 +82,11 @@ const About = () => {
           <p>
             Explore, indulge, and let's get writing! Whether you're jotting down
             life's precious moments, poetry, or simply letting your creativity
-            flow—your stories deserve a beautiful companion.
+            flow—your stories deserve a beautiful companion so pen it all down
+            with Dawaat.
           </p>
           <p>
+            <br />
             <strong>Connect with us:</strong>
             <br />
             📧 Email:{" "}

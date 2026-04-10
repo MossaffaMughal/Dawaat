@@ -6,6 +6,7 @@ const router = express.Router();
 
 // Public routes
 router.post("/", ReviewController.createReview); // Create review
+router.get("/recent", ReviewController.getRecentReviews); // Get recent reviews for homepage
 router.get("/product/:productId", ReviewController.getProductReviews); // Get reviews for product
 router.get("/stats/:productId", ReviewController.getReviewStats); // Get rating stats
 

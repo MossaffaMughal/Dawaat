@@ -315,11 +315,6 @@
     min-height: calc(100vh - 180px);
   }
 
-  /* Hide categories filter on mobile - show only price, sort, and search */
-  .search-box + .filter-section {
-    display: none !important;
-  }
-
   .products-header {
     padding: 35px 15px;
     box-shadow: 0 2px 6px rgba(139, 90, 90, 0.1);
@@ -432,11 +427,6 @@
 @media (max-width: 480px) {
   .products-page {
     min-height: calc(100vh - 160px);
-  }
-
-  /* Hide categories filter on mobile - show only price, sort, and search */
-  .search-box + .filter-section {
-    display: none !important;
   }
 
   .products-header {

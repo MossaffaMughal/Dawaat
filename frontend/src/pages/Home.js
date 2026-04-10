@@ -4,6 +4,7 @@ import { useCart } from "../context/CartContext";
 import { Link } from "react-router-dom";
 import "../styles/Home.css";
 import ProductCard from "../components/ProductCard";
+import HomeReviewsSection from "../components/HomeReviewsSection";
 
 const Home = () => {
   const [products, setProducts] = useState([]);
@@ -60,7 +61,7 @@ const Home = () => {
                   backgroundImage: "url(/images/categories/journals.jpeg)",
                 }}
               >
-                <span className="category-label">Journals</span>
+                <span className="category-label">Journals / Notebooks</span>
               </div>
             </div>
           </Link>
@@ -106,6 +107,7 @@ const Home = () => {
               View All Products
               <i className="fas fa-arrow-right"></i>
             </Link>
+            <HomeReviewsSection />
           </>
         )}
       </section>

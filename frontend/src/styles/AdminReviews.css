@@ -22,6 +22,26 @@
   font-size: 15px;
 }
 
+.review-status {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.review-status.success {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.review-status.error {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
 .no-reviews {
   text-align: center;
   padding: 60px 20px;
