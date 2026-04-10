@@ -216,4 +216,10 @@ export const ensureDatabaseSchema = async () => {
     VALUES ('shipping_cost', '250')
     ON CONFLICT (key) DO NOTHING;
   `);
+
+  await pool.query(`
+    INSERT INTO settings (key, value)
+    VALUES ('hero_banner_url', '/images/banners/hero-banner.jpeg')
+    ON CONFLICT (key) DO NOTHING;
+  `);
 };

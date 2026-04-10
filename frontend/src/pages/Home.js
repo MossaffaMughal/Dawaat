@@ -10,10 +10,14 @@ const Home = () => {
   const [products, setProducts] = useState([]);
   const [notification, setNotification] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [heroBannerUrl, setHeroBannerUrl] = useState(
+    "/images/banners/hero-banner.jpeg",
+  );
   const { addToCart } = useCart();
 
   useEffect(() => {
     fetchProducts();
+    fetchHeroBanner();
   }, []);
 
   const fetchProducts = async () => {
@@ -24,6 +28,17 @@ const Home = () => {
       console.error("Error fetching products:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchHeroBanner = async () => {
+    try {
+      const response = await apiClient.get("/orders/hero-banner");
+      if (response.data?.heroBannerUrl) {
+        setHeroBannerUrl(response.data.heroBannerUrl);
+      }
+    } catch (error) {
+      console.error("Error fetching hero banner URL:", error);
     }
   };
 
@@ -38,7 +53,7 @@ const Home = () => {
       <section
         className="hero"
         style={{
-          backgroundImage: "url(/images/banners/hero-banner.jpg)",
+          backgroundImage: `url(${heroBannerUrl || "/images/banners/hero-banner.jpeg"})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}

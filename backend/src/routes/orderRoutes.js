@@ -8,6 +8,8 @@ import {
   getUserOrders,
   getShippingCost,
   updateShippingCost,
+  getHeroBannerUrl,
+  updateHeroBannerUrl,
 } from "../controllers/orderController.js";
 import { authenticateToken, authorizeAdmin } from "../middleware/auth.js";
 
@@ -16,14 +18,21 @@ const router = express.Router();
 // Public routes
 router.post("/", createOrder);
 router.get("/shipping/cost", getShippingCost);
+router.get("/hero-banner", getHeroBannerUrl);
 router.get("/user/:userId", getUserOrders);
 
-// Admin routes for shipping cost
+// Admin routes for settings
 router.put(
   "/shipping/cost",
   authenticateToken,
   authorizeAdmin,
   updateShippingCost,
+);
+router.put(
+  "/hero-banner",
+  authenticateToken,
+  authorizeAdmin,
+  updateHeroBannerUrl,
 );
 
 // Admin routes

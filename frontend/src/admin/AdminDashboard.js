@@ -51,10 +51,15 @@ const AdminDashboard = () => {
   const [shippingCost, setShippingCost] = useState(250);
   const [shippingCostInput, setShippingCostInput] = useState(250);
   const [savingShippingCost, setSavingShippingCost] = useState(false);
+  const [heroBannerUrl, setHeroBannerUrl] = useState("");
+  const [heroBannerUrlInput, setHeroBannerUrlInput] = useState("");
+  const [savingHeroBanner, setSavingHeroBanner] = useState(false);
+  const [uploadingHeroBanner, setUploadingHeroBanner] = useState(false);
 
   useEffect(() => {
     fetchAdminData();
     fetchShippingCost();
+    fetchHeroBannerUrl();
   }, []);
 
   const showNotification = (message, type = "success") => {
@@ -85,6 +90,65 @@ const AdminDashboard = () => {
       showNotification("Error updating shipping cost", "error");
     } finally {
       setSavingShippingCost(false);
+    }
+  };
+
+  const fetchHeroBannerUrl = async () => {
+    try {
+      const response = await apiClient.get("/orders/hero-banner");
+      const currentUrl = response.data?.heroBannerUrl || "";
+      setHeroBannerUrl(currentUrl);
+      setHeroBannerUrlInput(currentUrl);
+    } catch (error) {
+      console.error("Error fetching hero banner URL:", error);
+    }
+  };
+
+  const handleSaveHeroBanner = async () => {
+    try {
+      setSavingHeroBanner(true);
+      await apiClient.put("/orders/hero-banner", {
+        heroBannerUrl: heroBannerUrlInput,
+      });
+      setHeroBannerUrl(heroBannerUrlInput);
+      showNotification("Hero banner updated successfully!", "success");
+    } catch (error) {
+      console.error("Error updating hero banner URL:", error);
+      showNotification("Error updating hero banner", "error");
+    } finally {
+      setSavingHeroBanner(false);
+    }
+  };
+
+  const handleHeroBannerUpload = async (e) => {
+    try {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      setUploadingHeroBanner(true);
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await apiClient.post("/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const uploadedUrl = String(response.data?.imageUrl || "").trim();
+      if (uploadedUrl) {
+        setHeroBannerUrlInput(uploadedUrl);
+        showNotification("Banner uploaded. Click Save to apply.", "success");
+      }
+    } catch (error) {
+      console.error("Error uploading hero banner image:", error);
+      showNotification("Error uploading banner image", "error");
+    } finally {
+      setUploadingHeroBanner(false);
+      if (e.target) {
+        e.target.value = "";
+      }
     }
   };
 
@@ -1072,6 +1136,57 @@ const AdminDashboard = () => {
                   <p className="setting-info">
                     ✓ Current shipping cost: Rs. {shippingCost}
                   </p>
+                )}
+              </div>
+            </div>
+
+            <div className="settings-card">
+              <div className="setting-item">
+                <h3>Hero Banner Image</h3>
+                <p className="setting-description">
+                  Upload a new homepage hero banner image or paste an image URL,
+                  then click Save.
+                </p>
+
+                <div
+                  className="setting-control"
+                  style={{ marginBottom: "10px" }}
+                >
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={handleHeroBannerUpload}
+                    disabled={uploadingHeroBanner}
+                  />
+                  {uploadingHeroBanner && <span>Uploading...</span>}
+                </div>
+
+                <div className="setting-control">
+                  <input
+                    type="text"
+                    value={heroBannerUrlInput}
+                    onChange={(e) => setHeroBannerUrlInput(e.target.value)}
+                    placeholder="Paste hero banner URL"
+                    className="setting-input"
+                  />
+                  <button
+                    className="btn-save-setting"
+                    onClick={handleSaveHeroBanner}
+                    disabled={savingHeroBanner || !heroBannerUrlInput.trim()}
+                  >
+                    {savingHeroBanner ? "Saving..." : "Save"}
+                  </button>
+                </div>
+
+                {heroBannerUrl && (
+                  <>
+                    <p className="setting-info">✓ Current hero banner:</p>
+                    <img
+                      src={heroBannerUrl}
+                      alt="Current hero banner"
+                      className="hero-banner-preview"
+                    />
+                  </>
                 )}
               </div>
             </div>

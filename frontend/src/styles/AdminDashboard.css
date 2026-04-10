@@ -848,6 +848,16 @@
   border-left-color: #f44336;
 }
 
+.hero-banner-preview {
+  width: 100%;
+  max-width: 520px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  object-fit: cover;
+  aspect-ratio: 16 / 7;
+}
+
 /* Responsive Settings */
 @media (max-width: 768px) {
   .setting-control {

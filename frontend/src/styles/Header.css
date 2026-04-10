@@ -309,7 +309,7 @@
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .header-main {
-    padding: 10px 15px;
+    padding: 12px 14px;
   }
 
   .navbar {
@@ -323,12 +323,12 @@
   }
 
   .logo-img {
-    height: 45px;
+    height: 50px;
     max-width: 100px;
   }
 
   .brand-name {
-    font-size: 20px;
+    font-size: 24px;
   }
 
   .search-container {
@@ -349,8 +349,8 @@
   }
 
   .profile-link {
-    padding: 2px 3px;
-    font-size: 10px;
+    padding: 4px 6px;
+    font-size: 12px;
   }
 
   .profile-name {
@@ -358,20 +358,20 @@
   }
 
   .profile-avatar-small {
-    width: 24px;
-    height: 24px;
-    font-size: 9px;
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
   }
 
   .admin-link,
   .logout-btn {
-    padding: 3px 6px;
-    font-size: 9px;
+    padding: 5px 9px;
+    font-size: 11px;
     white-space: nowrap;
   }
 
   .cart-link {
-    font-size: 11px;
+    font-size: 13px;
     position: relative;
   }
 
@@ -385,23 +385,29 @@
     flex-basis: 100%;
     order: 2;
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: nowrap;
+    gap: 12px;
+    overflow-x: auto;
     border-top: 1px solid #e0e0e0;
-    padding-top: 8px;
+    padding-top: 10px;
     margin-top: 8px;
-    font-size: 13px;
+    font-size: 15px;
+  }
+
+  .main-nav::-webkit-scrollbar {
+    display: none;
   }
 
   .main-nav a {
-    padding: 4px 8px;
-    font-size: 12px;
+    padding: 4px 2px;
+    font-size: 15px;
+    white-space: nowrap;
   }
 }
 
 @media (max-width: 480px) {
   .header-main {
-    padding: 8px 10px;
+    padding: 10px 10px;
   }
 
   .navbar {
@@ -413,12 +419,12 @@
   }
 
   .logo-img {
-    height: 40px;
+    height: 44px;
     max-width: 80px;
   }
 
   .brand-name {
-    font-size: 16px;
+    font-size: 20px;
   }
 
   .header-icons {
@@ -430,24 +436,24 @@
   }
 
   .profile-link {
-    padding: 1px 2px;
-    font-size: 9px;
+    padding: 3px 5px;
+    font-size: 11px;
   }
 
   .profile-avatar-small {
-    width: 20px;
-    height: 20px;
-    font-size: 8px;
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
   }
 
   .admin-link,
   .logout-btn {
-    padding: 2px 4px;
-    font-size: 8px;
+    padding: 4px 8px;
+    font-size: 10px;
   }
 
   .cart-link {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .cart-count {
@@ -457,14 +463,14 @@
   }
 
   .main-nav {
-    gap: 6px;
+    gap: 10px;
     padding-top: 6px;
     margin-top: 6px;
-    font-size: 12px;
+    font-size: 14px;
   }
 
   .main-nav a {
-    padding: 3px 6px;
-    font-size: 11px;
+    padding: 3px 2px;
+    font-size: 14px;
   }
 }

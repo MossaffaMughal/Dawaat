@@ -259,7 +259,7 @@ export const updateShippingCost = async (req, res) => {
       return res.status(400).json({ message: "Valid shipping cost required" });
     }
 
-    const result = await pool.query(
+    await pool.query(
       `UPDATE settings SET value = $1, updated_at = CURRENT_TIMESTAMP 
        WHERE key = 'shipping_cost'
        RETURNING *`,
@@ -275,5 +275,61 @@ export const updateShippingCost = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error updating shipping cost", error: error.message });
+  }
+};
+
+export const getHeroBannerUrl = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT value FROM settings WHERE key = 'hero_banner_url' LIMIT 1`,
+    );
+
+    res.json({
+      heroBannerUrl:
+        result.rows[0]?.value || "/images/banners/hero-banner.jpeg",
+    });
+  } catch (error) {
+    console.error("Get hero banner URL error:", error);
+    res
+      .status(500)
+      .json({
+        message: "Error fetching hero banner URL",
+        error: error.message,
+      });
+  }
+};
+
+export const updateHeroBannerUrl = async (req, res) => {
+  try {
+    const { heroBannerUrl } = req.body;
+
+    if (!heroBannerUrl || !String(heroBannerUrl).trim()) {
+      return res
+        .status(400)
+        .json({ message: "Valid hero banner URL required" });
+    }
+
+    const normalizedUrl = String(heroBannerUrl).trim();
+
+    await pool.query(
+      `INSERT INTO settings (key, value, updated_at)
+       VALUES ('hero_banner_url', $1, CURRENT_TIMESTAMP)
+       ON CONFLICT (key)
+       DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
+      [normalizedUrl],
+    );
+
+    res.json({
+      message: "Hero banner updated successfully",
+      heroBannerUrl: normalizedUrl,
+    });
+  } catch (error) {
+    console.error("Update hero banner URL error:", error);
+    res
+      .status(500)
+      .json({
+        message: "Error updating hero banner URL",
+        error: error.message,
+      });
   }
 };
