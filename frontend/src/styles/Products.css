@@ -338,8 +338,8 @@
 
   .filters {
     z-index: 10;
-    max-height: 280px;
-    overflow-y: auto;
+    max-height: none;
+    overflow: visible;
     padding: 14px 12px;
     margin-bottom: 0;
     border-radius: 4px;
@@ -414,6 +414,17 @@
     height: 12px;
   }
 
+  .price-inputs {
+    gap: 6px;
+  }
+
+  .price-input,
+  .sort-select {
+    padding: 8px 10px;
+    font-size: 12px;
+    border-radius: 3px;
+  }
+
   .products-grid {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 12px;
@@ -451,8 +462,8 @@
 
   .filters {
     z-index: 10;
-    max-height: 220px;
-    overflow-y: auto;
+    max-height: none;
+    overflow: visible;
     padding: 10px 10px;
     margin-bottom: 0;
     border-radius: 3px;
@@ -524,6 +535,17 @@
     margin-right: 4px;
     width: 11px;
     height: 11px;
+  }
+
+  .price-inputs {
+    gap: 5px;
+  }
+
+  .price-input,
+  .sort-select {
+    padding: 7px 9px;
+    font-size: 11px;
+    border-radius: 3px;
   }
 
   .products-grid {
