@@ -11,7 +11,7 @@ const Contact = () => {
 
       <div className="contact-content single-column">
         <div className="contact-info-section">
-          <h2>Other Ways to Reach Us</h2>
+          <h2>Ways to Reach Us</h2>
 
           <div className="info-box">
             <h3>📧 Email</h3>

@@ -21,7 +21,7 @@ const Checkout = () => {
     customerPhone: user?.phone || "",
     address: user?.address || "",
     city: user?.city || "",
-    postalCode: user?.postalCode || "",
+    postalCode: user?.postalCode || user?.postal_code || "",
     paymentMethod: "cod",
     shippingMethod: "standard",
   });
@@ -49,6 +49,21 @@ const Checkout = () => {
     fetchShippingCost();
   }, []);
 
+  // Update form data when user profile data loads
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        customerName: user.name || prev.customerName,
+        customerEmail: user.email || prev.customerEmail,
+        customerPhone: user.phone || prev.customerPhone,
+        address: user.address || prev.address,
+        city: user.city || prev.city,
+        postalCode: user.postalCode || user.postal_code || prev.postalCode,
+      }));
+    }
+  }, [user]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -60,6 +75,38 @@ const Checkout = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    // Additional client-side validation
+    if (!formData.customerName?.trim()) {
+      showNotification("Please enter your full name", "error");
+      setLoading(false);
+      return;
+    }
+    if (!formData.customerEmail?.trim()) {
+      showNotification("Please enter your email address", "error");
+      setLoading(false);
+      return;
+    }
+    if (!formData.customerPhone?.trim()) {
+      showNotification("Please enter your phone number", "error");
+      setLoading(false);
+      return;
+    }
+    if (!formData.address?.trim()) {
+      showNotification("Please enter your delivery address", "error");
+      setLoading(false);
+      return;
+    }
+    if (!formData.city?.trim()) {
+      showNotification("Please enter your city", "error");
+      setLoading(false);
+      return;
+    }
+    if (!formData.postalCode?.trim()) {
+      showNotification("Please enter your postal code", "error");
+      setLoading(false);
+      return;
+    }
 
     try {
       // Map cart items to match backend expectations
@@ -78,24 +125,44 @@ const Checkout = () => {
         userId: user?.id || null, // null for guest checkout
       };
 
+      // Log the order data being sent (for debugging)
+      console.log("Order data being sent:", orderData);
+
       const response = await apiClient.post("/orders", orderData);
 
+      console.log("Order response:", response.data);
+
       const orderNumber = response.data.order.order_number;
+
+      console.log("Order placed with number:", orderNumber);
 
       // Clear cart from context and localStorage
       clearCart();
       localStorage.removeItem("cart");
       localStorage.removeItem("checkoutData");
 
-      // Show success dialog with order number
-      setSuccessDialog({
-        isOpen: true,
-        orderNumber: orderNumber,
-        copied: false,
+      // Set flag for cart page to show success message
+      console.log(
+        "Setting sessionStorage with orderPlaced and orderNumber:",
+        orderNumber,
+      );
+      sessionStorage.setItem("orderPlaced", "true");
+      sessionStorage.setItem("orderNumber", orderNumber);
+
+      console.log("SessionStorage after:", {
+        orderPlaced: sessionStorage.getItem("orderPlaced"),
+        orderNumber: sessionStorage.getItem("orderNumber"),
       });
+
+      // Navigate to cart immediately - success message will show there
+      console.log("Navigating to /cart");
+      navigate("/cart");
     } catch (error) {
       console.error("Error placing order:", error);
-      showNotification("Error placing order. Please try again.", "error");
+      const errorMessage =
+        error.response?.data?.message ||
+        "Error placing order. Please try again.";
+      showNotification(errorMessage, "error");
     } finally {
       setLoading(false);
     }
@@ -111,7 +178,7 @@ const Checkout = () => {
 
   const handleSuccessDialogOK = () => {
     setSuccessDialog({ isOpen: false, orderNumber: "", copied: false });
-    navigate("/");
+    navigate("/cart");
   };
 
   if (!checkoutData.items) {

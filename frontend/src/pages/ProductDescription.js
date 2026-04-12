@@ -138,18 +138,44 @@ const ProductDescription = () => {
               <label className="selector-label">Choose Page Type:</label>
               <div className="page-options">
                 <button
-                  className={`page-option ${selectedVariant === "plain" ? "selected" : ""}`}
-                  onClick={() => setSelectedVariant("plain")}
+                  className={`page-option ${selectedVariant === "plain" ? "selected" : ""} ${!product.plain_pages_in_stock ? "disabled" : ""}`}
+                  onClick={() => {
+                    if (product.plain_pages_in_stock) {
+                      setSelectedVariant("plain");
+                    }
+                  }}
+                  disabled={!product.plain_pages_in_stock}
+                  title={
+                    !product.plain_pages_in_stock
+                      ? "Plain pages are out of stock"
+                      : ""
+                  }
                 >
                   <span className="option-icon">□</span>
                   <span className="option-text">Plain Pages</span>
+                  {!product.plain_pages_in_stock && (
+                    <span className="out-of-stock-label">Out of Stock</span>
+                  )}
                 </button>
                 <button
-                  className={`page-option ${selectedVariant === "lined" ? "selected" : ""}`}
-                  onClick={() => setSelectedVariant("lined")}
+                  className={`page-option ${selectedVariant === "lined" ? "selected" : ""} ${!product.lined_pages_in_stock ? "disabled" : ""}`}
+                  onClick={() => {
+                    if (product.lined_pages_in_stock) {
+                      setSelectedVariant("lined");
+                    }
+                  }}
+                  disabled={!product.lined_pages_in_stock}
+                  title={
+                    !product.lined_pages_in_stock
+                      ? "Lined pages are out of stock"
+                      : ""
+                  }
                 >
                   <span className="option-icon">≡</span>
                   <span className="option-text">Lined Pages</span>
+                  {!product.lined_pages_in_stock && (
+                    <span className="out-of-stock-label">Out of Stock</span>
+                  )}
                 </button>
               </div>
               {selectedVariant && (

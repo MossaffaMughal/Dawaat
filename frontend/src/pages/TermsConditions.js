@@ -146,7 +146,7 @@ const TermsConditions = () => {
           <h2>💬 Contact Us</h2>
           <p>
             If you have questions about these Terms & Conditions, please contact
-            us at <strong>dawaat.pk@gmail.com</strong>.
+            us at our email dawaat.pk@gmail.com.
           </p>
         </section>
       </div>

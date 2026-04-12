@@ -38,6 +38,17 @@ export const ensureDatabaseSchema = async () => {
     ADD COLUMN IF NOT EXISTS stock_quantity INTEGER DEFAULT 999;
   `);
 
+  // Add page type availability toggles (migration for existing databases)
+  await pool.query(`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS plain_pages_in_stock BOOLEAN DEFAULT true;
+  `);
+
+  await pool.query(`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS lined_pages_in_stock BOOLEAN DEFAULT true;
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS product_images (
       id SERIAL PRIMARY KEY,

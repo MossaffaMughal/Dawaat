@@ -93,29 +93,71 @@ const ProductCard = ({ product, onAddToCart }) => {
             <h3>Choose Page Type</h3>
             <p>Select between lined or plain pages</p>
             <div className="variant-options">
-              <label className="variant-option">
+              <label
+                className={`variant-option ${!product.plain_pages_in_stock ? "disabled" : ""}`}
+                title={
+                  !product.plain_pages_in_stock
+                    ? "Plain pages are out of stock"
+                    : ""
+                }
+              >
                 <input
                   type="radio"
                   name="pageType"
                   value="plain"
                   checked={selectedVariant === "plain"}
-                  onChange={(e) => setSelectedVariant(e.target.value)}
+                  onChange={(e) => {
+                    if (product.plain_pages_in_stock) {
+                      setSelectedVariant(e.target.value);
+                    }
+                  }}
+                  disabled={!product.plain_pages_in_stock}
                 />
-                <span>Plain Pages</span>
+                <span>
+                  Plain Pages{" "}
+                  {!product.plain_pages_in_stock && (
+                    <span className="out-of-stock">(Out of Stock)</span>
+                  )}
+                </span>
               </label>
-              <label className="variant-option">
+              <label
+                className={`variant-option ${!product.lined_pages_in_stock ? "disabled" : ""}`}
+                title={
+                  !product.lined_pages_in_stock
+                    ? "Lined pages are out of stock"
+                    : ""
+                }
+              >
                 <input
                   type="radio"
                   name="pageType"
                   value="lined"
                   checked={selectedVariant === "lined"}
-                  onChange={(e) => setSelectedVariant(e.target.value)}
+                  onChange={(e) => {
+                    if (product.lined_pages_in_stock) {
+                      setSelectedVariant(e.target.value);
+                    }
+                  }}
+                  disabled={!product.lined_pages_in_stock}
                 />
-                <span>Lined Pages</span>
+                <span>
+                  Lined Pages{" "}
+                  {!product.lined_pages_in_stock && (
+                    <span className="out-of-stock">(Out of Stock)</span>
+                  )}
+                </span>
               </label>
             </div>
             <div className="modal-buttons">
-              <button className="btn-confirm" onClick={handleVariantSelect}>
+              <button
+                className="btn-confirm"
+                onClick={handleVariantSelect}
+                disabled={
+                  (selectedVariant === "plain" &&
+                    !product.plain_pages_in_stock) ||
+                  (selectedVariant === "lined" && !product.lined_pages_in_stock)
+                }
+              >
                 Add to Cart
               </button>
               <button

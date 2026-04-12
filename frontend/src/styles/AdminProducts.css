@@ -140,6 +140,26 @@
   border-color: #721c24;
 }
 
+.status-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  min-width: 80px;
+}
+
+.status-badge.in-stock {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.out-of-stock {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;
@@ -147,6 +167,24 @@
 
   .products-table {
     font-size: 12px;
+    overflow-x: auto;
+    display: block;
+  }
+
+  .products-table thead {
+    display: table;
+    width: 100%;
+  }
+
+  .products-table tbody {
+    display: block;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .products-table tr {
+    display: table;
+    width: 100%;
   }
 
   .products-table th,

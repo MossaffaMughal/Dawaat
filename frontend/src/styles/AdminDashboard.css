@@ -185,6 +185,26 @@
   color: #842029;
 }
 
+.status-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  min-width: 80px;
+}
+
+.status-badge.in-stock {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.out-of-stock {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
 /* Form Styles */
 .admin-form {
   background-color: #f9f9f9;
@@ -282,6 +302,12 @@
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(139, 90, 90, 0.1);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
 }
 
 .form-buttons {

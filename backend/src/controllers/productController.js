@@ -102,7 +102,15 @@ export const getProductById = async (req, res) => {
 export const createProduct = async (req, res) => {
   try {
     console.log("[createProduct] Raw request body:", req.body);
-    let { name, description, price, category, in_stock } = req.body;
+    let {
+      name,
+      description,
+      price,
+      category,
+      in_stock,
+      plain_pages_in_stock,
+      lined_pages_in_stock,
+    } = req.body;
 
     // Ensure price is a number
     price = parseInt(price, 10);
@@ -112,8 +120,16 @@ export const createProduct = async (req, res) => {
     console.log("[createProduct] Parsed price:", price, "Type:", typeof price);
 
     const result = await pool.query(
-      "INSERT INTO products (name, description, price, category, in_stock) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [name, description, price, category, in_stock !== false],
+      "INSERT INTO products (name, description, price, category, in_stock, plain_pages_in_stock, lined_pages_in_stock) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+      [
+        name,
+        description,
+        price,
+        category,
+        in_stock !== false,
+        plain_pages_in_stock !== false,
+        lined_pages_in_stock !== false,
+      ],
     );
 
     res.status(201).json({
@@ -131,7 +147,15 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    let { name, description, price, category, in_stock } = req.body;
+    let {
+      name,
+      description,
+      price,
+      category,
+      in_stock,
+      plain_pages_in_stock,
+      lined_pages_in_stock,
+    } = req.body;
 
     console.log("[updateProduct] Raw request body:", req.body);
 
@@ -177,6 +201,16 @@ export const updateProduct = async (req, res) => {
     if (in_stock !== undefined) {
       updates.push(`in_stock = $${paramCount}`);
       values.push(in_stock !== false);
+      paramCount++;
+    }
+    if (plain_pages_in_stock !== undefined) {
+      updates.push(`plain_pages_in_stock = $${paramCount}`);
+      values.push(plain_pages_in_stock !== false);
+      paramCount++;
+    }
+    if (lined_pages_in_stock !== undefined) {
+      updates.push(`lined_pages_in_stock = $${paramCount}`);
+      values.push(lined_pages_in_stock !== false);
       paramCount++;
     }
 

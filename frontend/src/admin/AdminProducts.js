@@ -15,6 +15,8 @@ const AdminProducts = () => {
     price: "",
     category: "Notebook",
     stock_quantity: "",
+    plain_pages_in_stock: true,
+    lined_pages_in_stock: true,
   });
 
   useEffect(() => {
@@ -64,6 +66,8 @@ const AdminProducts = () => {
       price: product.price,
       category: product.category,
       stock_quantity: product.stock_quantity,
+      plain_pages_in_stock: product.plain_pages_in_stock ?? true,
+      lined_pages_in_stock: product.lined_pages_in_stock ?? true,
     });
     setEditingId(product.id);
     setShowForm(true);
@@ -89,6 +93,8 @@ const AdminProducts = () => {
       price: "",
       category: "Notebook",
       stock_quantity: "",
+      plain_pages_in_stock: true,
+      lined_pages_in_stock: true,
     });
     setEditingId(null);
     setShowForm(false);
@@ -170,6 +176,40 @@ const AdminProducts = () => {
             </div>
           </div>
 
+          <div className="form-row">
+            <div className="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    name="plain_pages_in_stock"
+                    checked={formData.plain_pages_in_stock}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        plain_pages_in_stock: e.target.checked,
+                      }))
+                    }
+                  />
+                  Plain Pages In Stock
+                </label>
+              </div>
+
+              <div className="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    name="lined_pages_in_stock"
+                    checked={formData.lined_pages_in_stock}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        lined_pages_in_stock: e.target.checked,
+                      }))
+                    }
+                  />
+                  Lined Pages In Stock
+                </label>
+
           <button type="submit" className="submit-btn">
             {editingId ? "Update Product" : "Create Product"}
           </button>
@@ -186,6 +226,8 @@ const AdminProducts = () => {
               <th>Category</th>
               <th>Price</th>
               <th>Stock</th>
+              <th>Plain Pages</th>
+              <th>Lined Pages</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -196,6 +238,16 @@ const AdminProducts = () => {
                 <td>{product.category}</td>
                 <td>Rs. {product.price}</td>
                 <td>{product.stock_quantity}</td>
+                <td>
+                  <span className={product.plain_pages_in_stock ? "status-badge in-stock" : "status-badge out-of-stock"}>
+                    {product.plain_pages_in_stock ? "✓ In Stock" : "✕ Out"}
+                  </span>
+                </td>
+                <td>
+                  <span className={product.lined_pages_in_stock ? "status-badge in-stock" : "status-badge out-of-stock"}>
+                    {product.lined_pages_in_stock ? "✓ In Stock" : "✕ Out"}
+                  </span>
+                </td>
                 <td>
                   <button
                     className="edit-btn"

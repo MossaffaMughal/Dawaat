@@ -3,6 +3,7 @@ import apiClient from "../utils/apiClient";
 import { useAuth } from "../context/AuthContext";
 import AdminReviews from "./AdminReviews";
 import ConfirmDialog from "../components/ConfirmDialog";
+import OrderDetailsDialog from "../components/OrderDetailsDialog";
 import "../styles/AdminDashboard.css";
 
 const AdminDashboard = () => {
@@ -26,6 +27,8 @@ const AdminDashboard = () => {
     price: "",
     category: "Notebook",
     in_stock: true,
+    plain_pages_in_stock: true,
+    lined_pages_in_stock: true,
   });
   const [uploadedImages, setUploadedImages] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -433,6 +436,8 @@ const AdminDashboard = () => {
       price: String(product.price), // Ensure price is a string for input field
       category: product.category,
       in_stock: product.in_stock ?? true,
+      plain_pages_in_stock: product.plain_pages_in_stock ?? true,
+      lined_pages_in_stock: product.lined_pages_in_stock ?? true,
     });
     // Load existing product images for editing
     if (product.images && product.images.length > 0) {
@@ -506,6 +511,8 @@ const AdminDashboard = () => {
       price: "",
       category: "Notebook",
       in_stock: true,
+      plain_pages_in_stock: true,
+      lined_pages_in_stock: true,
     });
     setUploadedImages([]);
     setUploadError("");
@@ -763,6 +770,42 @@ const AdminDashboard = () => {
                   </label>
                 </div>
 
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="plain_pages_in_stock"
+                        checked={productFormData.plain_pages_in_stock}
+                        onChange={(e) =>
+                          setProductFormData((prev) => ({
+                            ...prev,
+                            plain_pages_in_stock: e.target.checked,
+                          }))
+                        }
+                      />
+                      Plain Pages In Stock
+                    </label>
+                  </div>
+
+                  <div className="form-group">
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="lined_pages_in_stock"
+                        checked={productFormData.lined_pages_in_stock}
+                        onChange={(e) =>
+                          setProductFormData((prev) => ({
+                            ...prev,
+                            lined_pages_in_stock: e.target.checked,
+                          }))
+                        }
+                      />
+                      Lined Pages In Stock
+                    </label>
+                  </div>
+                </div>
+
                 <div className="form-group">
                   <label htmlFor="product-images">
                     Product Images (Max 6 images, 10MB each)
@@ -900,6 +943,8 @@ const AdminDashboard = () => {
                     <th>Name</th>
                     <th>Price</th>
                     <th>Category</th>
+                    <th>Plain Pages</th>
+                    <th>Lined Pages</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -911,6 +956,32 @@ const AdminDashboard = () => {
                       <td>{product.name}</td>
                       <td>Rs. {product.price}</td>
                       <td>{product.category}</td>
+                      <td>
+                        <span
+                          className={
+                            product.plain_pages_in_stock
+                              ? "in-stock"
+                              : "out-of-stock"
+                          }
+                        >
+                          {product.plain_pages_in_stock
+                            ? "✓ In Stock"
+                            : "✕ Out"}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className={
+                            product.lined_pages_in_stock
+                              ? "in-stock"
+                              : "out-of-stock"
+                          }
+                        >
+                          {product.lined_pages_in_stock
+                            ? "✓ In Stock"
+                            : "✕ Out"}
+                        </span>
+                      </td>
                       <td>
                         <button
                           type="button"
@@ -1007,89 +1078,13 @@ const AdminDashboard = () => {
               </table>
             )}
 
-            {selectedOrder && (
-              <div className="order-details">
-                <h3>Order #{selectedOrder.order_number} Details</h3>
-                <p>
-                  <strong>Customer:</strong> {selectedOrder.customer_name}
-                </p>
-                <p>
-                  <strong>Email:</strong> {selectedOrder.customer_email}
-                </p>
-                <p>
-                  <strong>Phone:</strong> {selectedOrder.customer_phone}
-                </p>
-                <p>
-                  <strong>Address:</strong> {selectedOrder.shipping_address}
-                </p>
-                <p>
-                  <strong>Amount:</strong> Rs. {selectedOrder.total_amount}
-                </p>
-                <p>
-                  <strong>Status:</strong> {selectedOrder.status}
-                </p>
-
-                {selectedOrder.items && selectedOrder.items.length > 0 && (
-                  <div className="order-items-section">
-                    <h4>Order Items</h4>
-                    <table className="order-items-table">
-                      <thead>
-                        <tr>
-                          <th>Product</th>
-                          <th>Quantity</th>
-                          <th>Price</th>
-                          <th>Type</th>
-                          <th>Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedOrder.items.map((item) => (
-                          <tr key={item.id}>
-                            <td>{item.product_name}</td>
-                            <td>{item.quantity}</td>
-                            <td>Rs. {item.price}</td>
-                            <td>
-                              {item.variant
-                                ? item.variant === "lined"
-                                  ? "Lined pages"
-                                  : "Plain pages"
-                                : "—"}
-                            </td>
-                            <td>
-                              Rs. {(item.price * item.quantity).toFixed(2)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-
-                <div className="status-update">
-                  <label>Update Status:</label>
-                  <select
-                    value={selectedOrder.status}
-                    onChange={(e) =>
-                      handleUpdateOrderStatus(selectedOrder.id, e.target.value)
-                    }
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                </div>
-
-                <button
-                  type="button"
-                  className="cancel-btn"
-                  onClick={() => setSelectedOrder(null)}
-                >
-                  Close
-                </button>
-              </div>
-            )}
+            <OrderDetailsDialog
+              isOpen={selectedOrder !== null}
+              order={selectedOrder}
+              onClose={() => setSelectedOrder(null)}
+              onStatusChange={handleUpdateOrderStatus}
+              onDelete={handleDeleteOrder}
+            />
           </div>
         )}
 

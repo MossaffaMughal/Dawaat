@@ -103,7 +103,7 @@ const ReturnsRefunds = () => {
           <h2>❓ Questions About Returns?</h2>
           <p>
             We're here to help! Email us at <strong>dawaat.pk@gmail.com</strong>{" "}
-            with with any questions or concerns about our returns policy.
+            with any questions or concerns about our returns policy.
           </p>
         </section>
       </div>

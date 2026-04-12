@@ -13,6 +13,7 @@ import { initStorage, testSupabaseConnection } from "./config/supabase.js";
 import { uploadImage } from "./services/uploadService.js";
 import { testDatabaseConnection } from "./config/database.js";
 import { ensureDatabaseSchema } from "./db/ensureSchema.js";
+import { fixMissingAddresses } from "./db/fixMissingAddresses.js";
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ const initPromise = (async () => {
   console.log("\n🔧 Initializing Dawaat Backend...");
   await testDatabaseConnection();
   await ensureDatabaseSchema();
+  await fixMissingAddresses();
   await testSupabaseConnection();
   await initStorage();
   console.log("✅ All systems ready!\n");

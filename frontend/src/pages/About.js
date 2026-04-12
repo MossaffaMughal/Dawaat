@@ -6,7 +6,7 @@ const About = () => {
     <div className="about-page">
       <div className="about-header">
         <h1>
-          Dawaat - a one woman design studio where creations meet nostalgia,
+          Dawaat - a one woman design studio where creation meets nostalgia,
           poetry meets, art, stories unfold over steaming cups of چائے and
           metaphors melt into inkpots.
         </h1>

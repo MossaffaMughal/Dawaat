@@ -28,6 +28,57 @@ export const createOrder = async (req, res) => {
       userId,
     } = req.body;
 
+    // Validate required fields
+    if (!customerName?.trim()) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ message: "Customer name is required" });
+    }
+    if (!customerEmail?.trim()) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ message: "Customer email is required" });
+    }
+    if (!customerPhone?.trim()) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ message: "Customer phone is required" });
+    }
+    if (!address?.trim()) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ message: "Address is required" });
+    }
+    if (!city?.trim()) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ message: "City is required" });
+    }
+    if (!postalCode?.trim()) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ message: "Postal code is required" });
+    }
+    if (!items || items.length === 0) {
+      await client.query("ROLLBACK");
+      return res
+        .status(400)
+        .json({ message: "Order must contain at least one item" });
+    }
+
+    // Log incoming data for debugging
+    console.log("Creating order with data:", {
+      customerName,
+      customerEmail,
+      customerPhone,
+      address,
+      city,
+      postalCode,
+      itemsCount: items?.length,
+      totalAmount,
+    });
+
+    console.log("📍 Address Details:", {
+      address: address?.trim(),
+      city: city?.trim(),
+      postalCode: postalCode?.trim(),
+      addressLength: address?.length,
+    });
+
     // Get shipping cost from settings
     const settingsResult = await client.query(
       `SELECT value FROM settings WHERE key = 'shipping_cost' LIMIT 1`,
@@ -62,6 +113,11 @@ export const createOrder = async (req, res) => {
     );
 
     const orderId = orderResult.rows[0].id;
+
+    console.log("Order inserted successfully:");
+    console.log("Order ID:", orderId);
+    console.log("Order data from DB:", orderResult.rows[0]);
+    console.log("Address from DB:", orderResult.rows[0].address);
 
     // Add order items
     for (const item of items) {
@@ -105,14 +161,29 @@ export const createOrder = async (req, res) => {
 export const getAllOrders = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT o.*, 
-              json_agg(json_build_object('id', oi.id, 'product_id', oi.product_id, 'product_name', oi.product_name, 'quantity', oi.quantity, 'price', oi.price, 'variant', oi.variant)) 
-              FILTER (WHERE oi.id IS NOT NULL) as items
+      `SELECT o.id, o.order_number, o.user_id, o.user_email, o.customer_name, o.customer_email, o.customer_phone, 
+              o.address, o.city, o.postal_code, o.total_amount, o.status, o.payment_method, 
+              o.shipping_method, o.notes, o.shipping_cost, o.created_at, o.updated_at,
+              COALESCE(json_agg(json_build_object('id', oi.id, 'product_id', oi.product_id, 'product_name', oi.product_name, 'quantity', oi.quantity, 'price', oi.price, 'variant', oi.variant)) 
+              FILTER (WHERE oi.id IS NOT NULL), '[]'::json) as items
        FROM orders o
        LEFT JOIN order_items oi ON o.id = oi.order_id
-       GROUP BY o.id
+       GROUP BY o.id, o.order_number, o.user_id, o.user_email, o.customer_name, o.customer_email, o.customer_phone, o.address, o.city, o.postal_code, o.total_amount, o.status, o.payment_method, o.shipping_method, o.notes, o.shipping_cost, o.created_at, o.updated_at
        ORDER BY o.created_at DESC`,
     );
+
+    console.log("All orders fetched, total count:", result.rows.length);
+    if (result.rows.length > 0) {
+      console.log("First order address:", result.rows[0].address);
+      console.log("📋 First order full details:", {
+        order_number: result.rows[0].order_number,
+        customer_name: result.rows[0].customer_name,
+        address: result.rows[0].address,
+        city: result.rows[0].city,
+        postal_code: result.rows[0].postal_code,
+        status: result.rows[0].status,
+      });
+    }
 
     res.json(result.rows);
   } catch (error) {
@@ -128,13 +199,15 @@ export const getOrderById = async (req, res) => {
     const { id } = req.params;
 
     const result = await pool.query(
-      `SELECT o.*, 
-              json_agg(json_build_object('id', oi.id, 'product_id', oi.product_id, 'product_name', oi.product_name, 'quantity', oi.quantity, 'price', oi.price, 'variant', oi.variant)) 
-              FILTER (WHERE oi.id IS NOT NULL) as items
+      `SELECT o.id, o.order_number, o.user_id, o.user_email, o.customer_name, o.customer_email, o.customer_phone, 
+              o.address, o.city, o.postal_code, o.total_amount, o.status, o.payment_method, 
+              o.shipping_method, o.notes, o.shipping_cost, o.created_at, o.updated_at,
+              COALESCE(json_agg(json_build_object('id', oi.id, 'product_id', oi.product_id, 'product_name', oi.product_name, 'quantity', oi.quantity, 'price', oi.price, 'variant', oi.variant)) 
+              FILTER (WHERE oi.id IS NOT NULL), '[]'::json) as items
        FROM orders o
        LEFT JOIN order_items oi ON o.id = oi.order_id
        WHERE o.id = $1
-       GROUP BY o.id`,
+       GROUP BY o.id, o.order_number, o.user_id, o.user_email, o.customer_name, o.customer_email, o.customer_phone, o.address, o.city, o.postal_code, o.total_amount, o.status, o.payment_method, o.shipping_method, o.notes, o.shipping_cost, o.created_at, o.updated_at`,
       [id],
     );
 
@@ -290,12 +363,10 @@ export const getHeroBannerUrl = async (req, res) => {
     });
   } catch (error) {
     console.error("Get hero banner URL error:", error);
-    res
-      .status(500)
-      .json({
-        message: "Error fetching hero banner URL",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error fetching hero banner URL",
+      error: error.message,
+    });
   }
 };
 
@@ -325,11 +396,9 @@ export const updateHeroBannerUrl = async (req, res) => {
     });
   } catch (error) {
     console.error("Update hero banner URL error:", error);
-    res
-      .status(500)
-      .json({
-        message: "Error updating hero banner URL",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error updating hero banner URL",
+      error: error.message,
+    });
   }
 };

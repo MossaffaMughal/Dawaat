@@ -10,6 +10,49 @@ const Cart = () => {
   const totalPrice = getTotalPrice();
   const [shippingCost, setShippingCost] = useState(250);
 
+  // Initialize orderSuccess from sessionStorage to show immediately
+  const [orderSuccess, setOrderSuccess] = useState(() => {
+    const orderPlaced = sessionStorage.getItem("orderPlaced");
+    if (orderPlaced) {
+      return true;
+    }
+    return false;
+  });
+  const [orderNumber, setOrderNumber] = useState(() => {
+    return sessionStorage.getItem("orderNumber") || null;
+  });
+
+  // Check for order success on component mount and when navigating back
+  useEffect(() => {
+    const checkOrderSuccess = () => {
+      const orderPlaced = sessionStorage.getItem("orderPlaced");
+      const orderNum = sessionStorage.getItem("orderNumber");
+
+      if (orderPlaced) {
+        setOrderSuccess(true);
+        setOrderNumber(orderNum);
+        // Clear after reading
+        sessionStorage.removeItem("orderPlaced");
+        sessionStorage.removeItem("orderNumber");
+      }
+    };
+
+    checkOrderSuccess();
+
+    // Also check when page becomes visible (in case of tab switching)
+    window.addEventListener("visibilitychange", checkOrderSuccess);
+    return () =>
+      window.removeEventListener("visibilitychange", checkOrderSuccess);
+  }, []);
+
+  // Auto-hide success message after 5 seconds
+  useEffect(() => {
+    if (orderSuccess) {
+      const timer = setTimeout(() => setOrderSuccess(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [orderSuccess]);
+
   useEffect(() => {
     const fetchShippingCost = async () => {
       try {
@@ -44,7 +87,37 @@ const Cart = () => {
     <div className="cart-page">
       <h1>Shopping Cart</h1>
 
-      {cart.length === 0 ? (
+      {orderSuccess ? (
+        <div className="success-container">
+          <div className="success-banner">
+            <div className="success-content">
+              <div className="success-icon">✓</div>
+              <div className="success-text">
+                <h2>Order Placed Successfully!</h2>
+                <p>
+                  Thank you for your purchase. Your order is being processed.
+                </p>
+                {orderNumber && (
+                  <p className="order-number">
+                    Order Number: <strong>{orderNumber}</strong>
+                  </p>
+                )}
+              </div>
+              <button
+                className="success-close"
+                onClick={() => setOrderSuccess(false)}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          <div className="success-actions">
+            <Link to="/products" className="continue-shopping-small">
+              Continue Shopping
+            </Link>
+          </div>
+        </div>
+      ) : cart.length === 0 ? (
         <div className="empty-cart">
           <p>Your cart is empty</p>
           <Link to="/products" className="continue-shopping">

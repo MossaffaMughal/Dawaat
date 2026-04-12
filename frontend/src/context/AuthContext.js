@@ -30,9 +30,14 @@ export const AuthProvider = ({ children }) => {
             headers: { Authorization: `Bearer ${token}` },
           },
         );
+        // Normalize postal_code to postalCode for frontend consistency
+        const normalizedProfile = {
+          ...profileResponse.data,
+          postalCode: profileResponse.data.postal_code,
+        };
         setUser({
           ...response.data.user,
-          ...profileResponse.data,
+          ...normalizedProfile,
         });
       } catch {
         // If profile fetch fails, just use the verified token data
@@ -57,9 +62,14 @@ export const AuthProvider = ({ children }) => {
           headers: { Authorization: `Bearer ${response.data.token}` },
         },
       );
+      // Normalize postal_code to postalCode for frontend consistency
+      const normalizedProfile = {
+        ...profileResponse.data,
+        postalCode: profileResponse.data.postal_code,
+      };
       const fullUser = {
         ...response.data.user,
-        ...profileResponse.data,
+        ...normalizedProfile,
       };
       setUser(fullUser);
       return { ...response.data, user: fullUser };
@@ -95,9 +105,14 @@ export const AuthProvider = ({ children }) => {
               headers: { Authorization: `Bearer ${response.data.token}` },
             },
           );
+          // Normalize postal_code to postalCode for frontend consistency
+          const normalizedProfile = {
+            ...profileResponse.data,
+            postalCode: profileResponse.data.postal_code,
+          };
           setUser((prev) => ({
             ...prev,
-            ...profileResponse.data,
+            ...normalizedProfile,
           }));
         } catch (error) {
           console.error("Error updating profile:", error);

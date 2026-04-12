@@ -59,6 +59,28 @@
   color: #555;
 }
 
+.offerings-list {
+  list-style: none;
+  padding: 0;
+}
+
+.offerings-list li {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #555;
+  margin-bottom: 15px;
+  padding-left: 25px;
+  position: relative;
+}
+
+.offerings-list li::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
 .values-list {
   list-style: none;
   padding: 0;
