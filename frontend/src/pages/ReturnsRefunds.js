@@ -102,8 +102,8 @@ const ReturnsRefunds = () => {
         <section className="policy-section">
           <h2>❓ Questions About Returns?</h2>
           <p>
-            We're here to help! Email us at <strong>dawaat.pk@gmail.com</strong>{" "}
-            with any questions or concerns about our returns policy.
+            We're here to help! Email us at dawaat.pk@gmail.com with any
+            questions or concerns about our returns policy.
           </p>
         </section>
       </div>
