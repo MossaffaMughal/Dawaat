@@ -91,6 +91,12 @@
   color: #333;
 }
 
+.payment-method {
+  font-weight: 500;
+  color: #666;
+  font-size: 12px;
+}
+
 .order-amount {
   font-weight: 600;
   font-size: 14px;

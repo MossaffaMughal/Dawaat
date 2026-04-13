@@ -72,6 +72,8 @@ const Checkout = () => {
     }));
   };
 
+  const isOnlinePayment = formData.paymentMethod === "online";
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -303,34 +305,81 @@ const Checkout = () => {
               </div>
               <div className="payment-details">
                 <label>Payment Method</label>
-                <p>Cash on Delivery</p>
-                <div className="online-payment-note">
-                  <p className="online-payment-intro">
-                    For online payments, kindly send the amount to:
-                  </p>
-                  <div className="online-payment-bank-details">
-                    <p>
-                      <span>Account Title:</span> Fatima Latif
+                <div className="payment-options">
+                  <label
+                    className={`payment-option ${
+                      formData.paymentMethod === "cod" ? "selected" : ""
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="cod"
+                      checked={formData.paymentMethod === "cod"}
+                      onChange={handleChange}
+                    />
+                    <span className="payment-option-content">
+                      <span className="payment-option-title">
+                        Cash on Delivery
+                      </span>
+                      <span className="payment-option-subtitle">
+                        Pay when your order arrives.
+                      </span>
+                    </span>
+                  </label>
+
+                  <label
+                    className={`payment-option ${
+                      formData.paymentMethod === "online" ? "selected" : ""
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="online"
+                      checked={formData.paymentMethod === "online"}
+                      onChange={handleChange}
+                    />
+                    <span className="payment-option-content">
+                      <span className="payment-option-title">
+                        Online Payment
+                      </span>
+                      <span className="payment-option-subtitle">
+                        Transfer the amount using bank details below.
+                      </span>
+                    </span>
+                  </label>
+                </div>
+
+                {isOnlinePayment && (
+                  <div className="online-payment-note">
+                    <p className="online-payment-intro">
+                      For online payments, kindly send the amount to:
                     </p>
-                    <p>
-                      <span>Bank:</span> Askari Bank
-                    </p>
-                    <p>
-                      <span>IBAN:</span> PK18ASCM0003200320026046
+                    <div className="online-payment-bank-details">
+                      <p>
+                        <span>Account Title:</span> Fatima Latif
+                      </p>
+                      <p>
+                        <span>Bank:</span> Askari Bank
+                      </p>
+                      <p>
+                        <span>IBAN:</span> PK18ASCM0003200320026046
+                      </p>
+                    </div>
+                    <p className="online-payment-whatsapp">
+                      Please share the transaction screenshot on WhatsApp at{" "}
+                      <a
+                        href="https://wa.me/923354023791"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        +923354023791
+                      </a>
+                      .
                     </p>
                   </div>
-                  <p className="online-payment-whatsapp">
-                    Please share the transaction screenshot on WhatsApp at{" "}
-                    <a
-                      href="https://wa.me/923354023791"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      +923354023791
-                    </a>
-                    .
-                  </p>
-                </div>
+                )}
               </div>
             </div>
           </div>

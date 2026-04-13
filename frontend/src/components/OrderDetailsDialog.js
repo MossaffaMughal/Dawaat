@@ -89,6 +89,19 @@ const OrderDetailsDialog = ({
               </div>
             </div>
 
+            <div className="info-group">
+              <h4>Payment Method</h4>
+              <p>
+                <strong>
+                  {order.payment_method === "online"
+                    ? "Online Payment"
+                    : order.payment_method === "cod"
+                      ? "Cash on Delivery"
+                      : order.payment_method || "N/A"}
+                </strong>
+              </p>
+            </div>
+
             {/* Items */}
             {order.items && order.items.length > 0 && (
               <div className="info-group">

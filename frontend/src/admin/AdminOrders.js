@@ -107,6 +107,14 @@ const AdminOrders = () => {
                 </span>
               </div>
               <p className="customer-name">{order.customer_name}</p>
+              <p className="payment-method">
+                Payment:{" "}
+                {order.payment_method === "online"
+                  ? "Online Payment"
+                  : order.payment_method === "cod"
+                    ? "Cash on Delivery"
+                    : order.payment_method || "N/A"}
+              </p>
               <p className="order-amount">
                 Rs.{" "}
                 {(
