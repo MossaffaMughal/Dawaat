@@ -304,6 +304,33 @@ const Checkout = () => {
               <div className="payment-details">
                 <label>Payment Method</label>
                 <p>Cash on Delivery</p>
+                <div className="online-payment-note">
+                  <p className="online-payment-intro">
+                    For online payments, kindly send the amount to:
+                  </p>
+                  <div className="online-payment-bank-details">
+                    <p>
+                      <span>Account Title:</span> Fatima Latif
+                    </p>
+                    <p>
+                      <span>Bank:</span> Askari Bank
+                    </p>
+                    <p>
+                      <span>IBAN:</span> PK18ASCM0003200320026046
+                    </p>
+                  </div>
+                  <p className="online-payment-whatsapp">
+                    Please share the transaction screenshot on WhatsApp at{" "}
+                    <a
+                      href="https://wa.me/923354023791"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      +923354023791
+                    </a>
+                    .
+                  </p>
+                </div>
               </div>
             </div>
           </div>
