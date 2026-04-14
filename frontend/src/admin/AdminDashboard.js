@@ -34,6 +34,8 @@ const AdminDashboard = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [existingImageIds, setExistingImageIds] = useState([]); // Track IDs of existing images for deletion purposes
+  const [removedImageIds, setRemovedImageIds] = useState([]); // Track which existing images were removed
 
   // Order details state
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -260,33 +262,48 @@ const AdminDashboard = () => {
       };
       console.log("Submitting product data:", submittedData);
 
-      // Get existing image URLs before update (for editing case)
-      const existingImageUrls =
-        editingProductId && uploadedImages.length > 0 ? uploadedImages : [];
-
       let productId;
       if (editingProductId) {
         await apiClient.put(`/products/${editingProductId}`, submittedData);
         productId = editingProductId;
+
+        // DELETE removed images from database
+        console.log("Removing images:", removedImageIds);
+        for (const imageId of removedImageIds) {
+          try {
+            await apiClient.delete(`/products/images/${imageId}`);
+            console.log(`Deleted image ID: ${imageId}`);
+          } catch (error) {
+            console.error(`Error deleting image ${imageId}:`, error);
+          }
+        }
       } else {
         const response = await apiClient.post("/products", submittedData);
         productId = response.data.product.id;
         console.log("New product created with ID:", productId);
       }
 
-      // Only add NEW images (skip existing ones that are already in database)
-      // If editing, uploadedImages contains both old and new URLs
-      // We need to identify which are new by checking if they're data URLs
-      const newImages = uploadedImages.filter(
-        (url) => url.startsWith("data:") || !existingImageUrls.includes(url),
-      );
+      // Only add NEW images (images added after initial load)
+      // New images are those added beyond the initially loaded existing images
+      let newImages = [];
+      if (editingProductId) {
+        // When editing: images beyond existingImageIds.length are new
+        // This works whether the product had 0 or more existing images
+        newImages = uploadedImages.slice(existingImageIds.length);
+      } else {
+        // Creating new product: all images are new
+        newImages = uploadedImages;
+      }
 
+      console.log(
+        `Adding ${newImages.length} new images to product ${productId}`,
+      );
       for (let i = 0; i < newImages.length; i++) {
         console.log(`Adding image ${i + 1} to product ${productId}`);
         await apiClient.post("/products/images/add", {
           productId,
           imageUrl: newImages[i],
-          displayOrder: existingImageUrls.length + i,
+          displayOrder: existingImageIds.length + i,
         });
       }
 
@@ -420,7 +437,19 @@ const AdminDashboard = () => {
   };
 
   const removeUploadedImage = (index) => {
+    // If this is an existing image (from edit), track its ID for deletion
+    if (index < existingImageIds.length) {
+      const imageIdToRemove = existingImageIds[index];
+      setRemovedImageIds((prev) => [...prev, imageIdToRemove]);
+    }
+
+    // Remove from both arrays
     setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+    setExistingImageIds((prev) => {
+      const updated = [...prev];
+      updated.splice(index, 1);
+      return updated;
+    });
   };
 
   const handleEditProduct = (product) => {
@@ -442,10 +471,15 @@ const AdminDashboard = () => {
     // Load existing product images for editing
     if (product.images && product.images.length > 0) {
       const imageUrls = product.images.map((img) => img.image_url);
+      const imageIds = product.images.map((img) => img.id);
       setUploadedImages(imageUrls);
+      setExistingImageIds(imageIds); // Store the IDs for tracking deletions
+      setRemovedImageIds([]); // Reset removed images tracker
       console.log("Loaded existing images for product:", imageUrls);
     } else {
       setUploadedImages([]);
+      setExistingImageIds([]);
+      setRemovedImageIds([]);
     }
     setEditingProductId(product.id);
     setShowProductForm(true);
@@ -515,6 +549,8 @@ const AdminDashboard = () => {
       lined_pages_in_stock: true,
     });
     setUploadedImages([]);
+    setExistingImageIds([]);
+    setRemovedImageIds([]);
     setUploadError("");
   };
 
