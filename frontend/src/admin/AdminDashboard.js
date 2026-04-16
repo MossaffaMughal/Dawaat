@@ -4,7 +4,6 @@ import { useAuth } from "../context/AuthContext";
 import AdminReviews from "./AdminReviews";
 import ConfirmDialog from "../components/ConfirmDialog";
 import OrderDetailsDialog from "../components/OrderDetailsDialog";
-import ProductFormDialogModal from "../components/ProductFormDialogModal";
 import "../styles/AdminDashboard.css";
 
 const AdminDashboard = () => {
