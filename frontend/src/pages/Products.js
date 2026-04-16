@@ -148,6 +148,16 @@ const Products = () => {
                 />
                 <span>Bookmarks</span>
               </label>
+              <label className={filter === "Bundles" ? "active" : ""}>
+                <input
+                  type="radio"
+                  name="category"
+                  value="Bundles"
+                  checked={filter === "Bundles"}
+                  onChange={(e) => setFilter(e.target.value)}
+                />
+                <span>Bundles</span>
+              </label>
             </div>
           </div>
 

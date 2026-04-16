@@ -242,31 +242,67 @@
 }
 
 .order-details-footer {
-  padding: 16px 24px;
+  padding: 20px 24px;
   border-top: 1px solid #f0f0f0;
   display: flex;
+  flex-direction: row;
   gap: 12px;
-  justify-content: flex-end;
 }
 
 .delete-btn,
 .close-dialog-btn {
-  padding: 10px 20px;
+  display: block;
+  padding: 12px 20px;
   border: none;
   border-radius: 4px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s;
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .delete-btn {
   background-color: #f44336;
   color: white;
+  position: relative;
+  transition: all 0.2s ease;
 }
 
 .delete-btn:hover {
-  background-color: #da190b;
+  background-color: #c62828;
+  transform: scale(1.08);
+  box-shadow:
+    0 0 0 4px rgba(244, 67, 54, 0.4),
+    0 0 20px 0px rgba(244, 67, 54, 0.6),
+    0 8px 20px rgba(0, 0, 0, 0.3);
+  animation: deleteButtonLinger 0.8s ease-in-out infinite;
+}
+
+@keyframes deleteButtonLinger {
+  0% {
+    box-shadow:
+      0 0 0 4px rgba(244, 67, 54, 0.4),
+      0 0 20px 0px rgba(244, 67, 54, 0.6),
+      0 8px 20px rgba(0, 0, 0, 0.3);
+    transform: scale(1.08);
+  }
+  50% {
+    box-shadow:
+      0 0 0 8px rgba(244, 67, 54, 0.2),
+      0 0 30px 2px rgba(244, 67, 54, 0.8),
+      0 12px 30px rgba(0, 0, 0, 0.4);
+    transform: scale(1.12);
+  }
+  100% {
+    box-shadow:
+      0 0 0 4px rgba(244, 67, 54, 0.4),
+      0 0 20px 0px rgba(244, 67, 54, 0.6),
+      0 8px 20px rgba(0, 0, 0, 0.3);
+    transform: scale(1.08);
+  }
 }
 
 .close-dialog-btn {
@@ -333,44 +369,6 @@
   box-shadow: 0 0 0 3px rgba(139, 111, 71, 0.1);
 }
 
-.order-details-footer {
-  padding: 16px 24px;
-  border-top: 2px solid #f0f0f0;
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-.delete-btn,
-.close-dialog-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.close-dialog-btn {
-  background-color: #f0f0f0;
-  color: #333;
-}
-
-.close-dialog-btn:hover {
-  background-color: #e0e0e0;
-}
-
-.delete-btn {
-  background-color: #f44336;
-  color: white;
-}
-
-.delete-btn:hover {
-  background-color: #da190b;
-  transform: translateY(-1px);
-}
-
 /* Scrollbar styling */
 .order-details-body::-webkit-scrollbar {
   width: 6px;
@@ -408,12 +406,18 @@
 
   .order-details-footer {
     padding: 12px 16px;
-    flex-direction: column-reverse;
+    gap: 10px;
+    flex-direction: row;
   }
 
   .delete-btn,
   .close-dialog-btn {
-    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 13px;
   }
 
   .detail-row {

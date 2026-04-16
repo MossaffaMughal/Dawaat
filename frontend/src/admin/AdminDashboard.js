@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import AdminReviews from "./AdminReviews";
 import ConfirmDialog from "../components/ConfirmDialog";
 import OrderDetailsDialog from "../components/OrderDetailsDialog";
+import ProductFormDialogModal from "../components/ProductFormDialogModal";
 import "../styles/AdminDashboard.css";
 
 const AdminDashboard = () => {
@@ -66,6 +67,18 @@ const AdminDashboard = () => {
     fetchShippingCost();
     fetchHeroBannerUrl();
   }, []);
+
+  // Toggle backdrop class when form opens/closes
+  useEffect(() => {
+    if (showProductForm) {
+      document.body.classList.add("admin-form-open");
+    } else {
+      document.body.classList.remove("admin-form-open");
+    }
+    return () => {
+      document.body.classList.remove("admin-form-open");
+    };
+  }, [showProductForm]);
 
   const showNotification = (message, type = "success") => {
     setNotification({ message, type });
@@ -786,6 +799,7 @@ const AdminDashboard = () => {
                   >
                     <option value="Notebook">Journal</option>
                     <option value="Bookmark">Bookmark</option>
+                    <option value="Bundles">Bundles</option>
                   </select>
                 </div>
 
@@ -806,41 +820,43 @@ const AdminDashboard = () => {
                   </label>
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="plain_pages_in_stock"
-                        checked={productFormData.plain_pages_in_stock}
-                        onChange={(e) =>
-                          setProductFormData((prev) => ({
-                            ...prev,
-                            plain_pages_in_stock: e.target.checked,
-                          }))
-                        }
-                      />
-                      Plain Pages In Stock
-                    </label>
-                  </div>
+                {productFormData.category === "Notebook" && (
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          name="plain_pages_in_stock"
+                          checked={productFormData.plain_pages_in_stock}
+                          onChange={(e) =>
+                            setProductFormData((prev) => ({
+                              ...prev,
+                              plain_pages_in_stock: e.target.checked,
+                            }))
+                          }
+                        />
+                        Plain Pages In Stock
+                      </label>
+                    </div>
 
-                  <div className="form-group">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="lined_pages_in_stock"
-                        checked={productFormData.lined_pages_in_stock}
-                        onChange={(e) =>
-                          setProductFormData((prev) => ({
-                            ...prev,
-                            lined_pages_in_stock: e.target.checked,
-                          }))
-                        }
-                      />
-                      Lined Pages In Stock
-                    </label>
+                    <div className="form-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          name="lined_pages_in_stock"
+                          checked={productFormData.lined_pages_in_stock}
+                          onChange={(e) =>
+                            setProductFormData((prev) => ({
+                              ...prev,
+                              lined_pages_in_stock: e.target.checked,
+                            }))
+                          }
+                        />
+                        Lined Pages In Stock
+                      </label>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="form-group">
                   <label htmlFor="product-images">

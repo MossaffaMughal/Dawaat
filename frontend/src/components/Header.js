@@ -112,6 +112,7 @@ const Header = () => {
           <Link to="/products">All Products</Link>
           <Link to="/products?category=Notebook">Journals</Link>
           <Link to="/products?category=Bookmark">Bookmarks</Link>
+          <Link to="/products?category=Bundles">Bundles</Link>
         </nav>
       </div>
     </header>

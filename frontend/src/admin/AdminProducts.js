@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import apiClient from "../utils/apiClient";
 import { useAuth } from "../context/AuthContext";
+import ProductFormModal from "../components/ProductFormModal";
 import "../styles/AdminProducts.css";
 
 const AdminProducts = () => {
@@ -35,10 +36,10 @@ const AdminProducts = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -112,109 +113,18 @@ const AdminProducts = () => {
     <div className="admin-products">
       <h1>Manage Products</h1>
 
-      <button className="add-btn" onClick={() => setShowForm(!showForm)}>
-        {showForm ? "Cancel" : "Add New Product"}
+      <button className="add-btn" onClick={() => setShowForm(true)}>
+        + Add Product
       </button>
 
-      {showForm && (
-        <form className="product-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Product Name</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Description</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows="4"
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Price (Rs.)</label>
-              <input
-                type="number"
-                step="0.01"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Category</label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-              >
-                <option value="Notebook">Journal</option>
-                <option value="Bookmark">Bookmark</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Stock Quantity</label>
-              <input
-                type="number"
-                name="stock_quantity"
-                value={formData.stock_quantity}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    name="plain_pages_in_stock"
-                    checked={formData.plain_pages_in_stock}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        plain_pages_in_stock: e.target.checked,
-                      }))
-                    }
-                  />
-                  Plain Pages In Stock
-                </label>
-              </div>
-
-              <div className="form-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    name="lined_pages_in_stock"
-                    checked={formData.lined_pages_in_stock}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        lined_pages_in_stock: e.target.checked,
-                      }))
-                    }
-                  />
-                  Lined Pages In Stock
-                </label>
-
-          <button type="submit" className="submit-btn">
-            {editingId ? "Update Product" : "Create Product"}
-          </button>
-        </form>
-      )}
+      <ProductFormModal
+        isOpen={showForm}
+        editingId={editingId}
+        formData={formData}
+        onInputChange={handleInputChange}
+        onSubmit={handleSubmit}
+        onClose={resetForm}
+      />
 
       {loading ? (
         <p>Loading products...</p>
@@ -239,12 +149,24 @@ const AdminProducts = () => {
                 <td>Rs. {product.price}</td>
                 <td>{product.stock_quantity}</td>
                 <td>
-                  <span className={product.plain_pages_in_stock ? "status-badge in-stock" : "status-badge out-of-stock"}>
+                  <span
+                    className={
+                      product.plain_pages_in_stock
+                        ? "status-badge in-stock"
+                        : "status-badge out-of-stock"
+                    }
+                  >
                     {product.plain_pages_in_stock ? "✓ In Stock" : "✕ Out"}
                   </span>
                 </td>
                 <td>
-                  <span className={product.lined_pages_in_stock ? "status-badge in-stock" : "status-badge out-of-stock"}>
+                  <span
+                    className={
+                      product.lined_pages_in_stock
+                        ? "status-badge in-stock"
+                        : "status-badge out-of-stock"
+                    }
+                  >
                     {product.lined_pages_in_stock ? "✓ In Stock" : "✕ Out"}
                   </span>
                 </td>
