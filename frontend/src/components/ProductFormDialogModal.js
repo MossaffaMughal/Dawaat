@@ -81,6 +81,9 @@ const ProductFormDialogModal = ({
                   >
                     <option value="Notebook">Journal</option>
                     <option value="Bookmark">Bookmark</option>
+                    <option value="Notebooks">Notebooks</option>
+                    <option value="Cards">Cards</option>
+                    <option value="Stickers">Stickers</option>
                     <option value="Bundles">Bundles</option>
                   </select>
                 </div>

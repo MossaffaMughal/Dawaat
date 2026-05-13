@@ -15,6 +15,13 @@ const Checkout = () => {
     orderNumber: "",
     copied: false,
   });
+  const [discountCode, setDiscountCode] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState(null);
+  const [discountState, setDiscountState] = useState({
+    loading: false,
+    message: "",
+    type: "",
+  });
   const [formData, setFormData] = useState({
     customerName: user?.name || "",
     customerEmail: user?.email || "",
@@ -73,6 +80,48 @@ const Checkout = () => {
   };
 
   const isOnlinePayment = formData.paymentMethod === "online";
+  const subtotal = checkoutData.total || 0;
+  const discountAmount = appliedDiscount
+    ? (subtotal * appliedDiscount.percentage) / 100
+    : 0;
+  const discountedSubtotal = Math.max(subtotal - discountAmount, 0);
+  const total = discountedSubtotal + shippingCost;
+
+  const handleApplyDiscountCode = async () => {
+    const trimmedCode = discountCode.trim();
+
+    if (!trimmedCode) {
+      setAppliedDiscount(null);
+      setDiscountState({
+        loading: false,
+        message: "Enter a discount code.",
+        type: "error",
+      });
+      return;
+    }
+
+    try {
+      setDiscountState({ loading: true, message: "", type: "" });
+      const response = await apiClient.post("/discount-codes/validate", {
+        code: trimmedCode,
+      });
+
+      setAppliedDiscount(response.data.discountCode);
+      setDiscountState({
+        loading: false,
+        message: `Discount code applied: ${response.data.discountCode.percentage}% off`,
+        type: "success",
+      });
+    } catch (error) {
+      setAppliedDiscount(null);
+      setDiscountState({
+        loading: false,
+        message:
+          error.response?.data?.message || "Invalid or inactive discount code.",
+        type: "error",
+      });
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -123,7 +172,10 @@ const Checkout = () => {
       const orderData = {
         ...formData,
         items: mappedItems,
-        totalAmount: checkoutData.total,
+        totalAmount: total,
+        discountCode: appliedDiscount?.code || null,
+        discountPercentage: appliedDiscount?.percentage || 0,
+        discountAmount,
         userId: user?.id || null, // null for guest checkout
       };
 
@@ -192,9 +244,6 @@ const Checkout = () => {
       </div>
     );
   }
-
-  const subtotal = checkoutData.total || 0;
-  const total = subtotal + shippingCost;
 
   return (
     <div className="checkout">
@@ -403,10 +452,42 @@ const Checkout = () => {
                 <span>Subtotal</span>
                 <span>Rs. {subtotal.toFixed(0)}</span>
               </div>
+              {appliedDiscount && (
+                <div className="summary-item">
+                  <span>Discount ({appliedDiscount.code})</span>
+                  <span>- Rs. {discountAmount.toFixed(0)}</span>
+                </div>
+              )}
               <div className="summary-item">
                 <span>Shipping</span>
                 <span>Rs. {shippingCost.toFixed(0)}</span>
               </div>
+            </div>
+
+            <div className="discount-code-box">
+              <label htmlFor="discountCode">Discount Code</label>
+              <div className="discount-code-row">
+                <input
+                  id="discountCode"
+                  type="text"
+                  value={discountCode}
+                  onChange={(e) => setDiscountCode(e.target.value)}
+                  placeholder="Enter code"
+                />
+                <button
+                  type="button"
+                  className="apply-discount-btn"
+                  onClick={handleApplyDiscountCode}
+                  disabled={discountState.loading}
+                >
+                  {discountState.loading ? "Applying..." : "Apply"}
+                </button>
+              </div>
+              {discountState.message && (
+                <p className={`discount-message ${discountState.type}`}>
+                  {discountState.message}
+                </p>
+              )}
             </div>
 
             <div className="summary-total">

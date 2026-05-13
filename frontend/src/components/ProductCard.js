@@ -9,6 +9,12 @@ const ProductCard = ({ product, onAddToCart }) => {
   const [showVariantModal, setShowVariantModal] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState("plain");
   const { isInWishlist, toggleWishlist } = useWishlist();
+  const hasSalePrice =
+    product.sale_price !== undefined &&
+    product.sale_price !== null &&
+    product.sale_price !== "";
+  const currentPrice =
+    product.current_price ?? product.sale_price ?? product.price;
 
   useEffect(() => {
     if (product.images && product.images.length > 0) {
@@ -44,7 +50,7 @@ const ProductCard = ({ product, onAddToCart }) => {
         <div className="product-card">
           <div className="product-image">
             {mainImage && <img src={mainImage} alt={product.name} />}
-            {product.discount && <span className="sale-badge">Sale</span>}
+            {hasSalePrice && <span className="sale-badge">Sale</span>}
             <button
               className={`wishlist-btn ${isInWishlist(product.id) ? "active" : ""}`}
               onClick={handleWishlistClick}
@@ -66,7 +72,14 @@ const ProductCard = ({ product, onAddToCart }) => {
             <ReviewStats productId={product.id} />
 
             <div className="product-price">
-              <span className="price">Rs.{product.price}</span>
+              {hasSalePrice ? (
+                <>
+                  <span className="original-price">Rs. {product.price}</span>
+                  <span className="sale-price">Rs. {currentPrice}</span>
+                </>
+              ) : (
+                <span className="price">Rs. {currentPrice}</span>
+              )}
             </div>
           </div>
         </div>

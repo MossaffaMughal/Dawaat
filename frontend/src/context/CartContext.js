@@ -14,6 +14,8 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (product, quantity = 1, variant = null) => {
     setCart((prevCart) => {
+      const effectivePrice =
+        product.sale_price ?? product.current_price ?? product.price;
       const existingItem = prevCart.find(
         (item) =>
           item.id === product.id &&
@@ -28,7 +30,11 @@ export const CartProvider = ({ children }) => {
             : item,
         );
       } else {
-        const newItem = { ...product, quantity };
+        const newItem = {
+          ...product,
+          price: effectivePrice,
+          quantity,
+        };
         if (variant) {
           newItem.variant = variant;
         }

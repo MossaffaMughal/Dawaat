@@ -10,6 +10,8 @@ import {
   updateShippingCost,
   getHeroBannerUrl,
   updateHeroBannerUrl,
+  getPromoBanner,
+  updatePromoBanner,
 } from "../controllers/orderController.js";
 import { authenticateToken, authorizeAdmin } from "../middleware/auth.js";
 
@@ -19,6 +21,7 @@ const router = express.Router();
 router.post("/", createOrder);
 router.get("/shipping/cost", getShippingCost);
 router.get("/hero-banner", getHeroBannerUrl);
+router.get("/promo-banner", getPromoBanner);
 router.get("/user/:userId", getUserOrders);
 
 // Admin routes for settings
@@ -33,6 +36,12 @@ router.put(
   authenticateToken,
   authorizeAdmin,
   updateHeroBannerUrl,
+);
+router.put(
+  "/promo-banner",
+  authenticateToken,
+  authorizeAdmin,
+  updatePromoBanner,
 );
 
 // Admin routes

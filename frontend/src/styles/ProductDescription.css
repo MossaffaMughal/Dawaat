@@ -95,6 +95,18 @@
   gap: 20px;
 }
 
+.original-price {
+  color: #999;
+  text-decoration: line-through;
+  font-size: 18px;
+}
+
+.sale-price {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
 .price {
   font-size: 24px;
   font-weight: 700;

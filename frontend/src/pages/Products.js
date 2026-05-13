@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import apiClient from "../utils/apiClient";
 import { useCart } from "../context/CartContext";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import "../styles/Products.css";
 import ProductCard from "../components/ProductCard";
 import HomeReviewsSection from "../components/HomeReviewsSection";
@@ -24,6 +24,8 @@ const Products = () => {
     const minPriceParam = searchParams.get("minPrice");
     const maxPriceParam = searchParams.get("maxPrice");
     const sortByParam = searchParams.get("sortBy");
+
+    console.log("URL Params - category:", categoryParam, "search:", searchParam, "minPrice:", minPriceParam, "maxPrice:", maxPriceParam, "sortBy:", sortByParam);
 
     setFilter(categoryParam || "all");
     setSearch(searchParam || "");
@@ -54,7 +56,12 @@ const Products = () => {
           params.append("sortBy", sortBy);
         }
 
-        const response = await apiClient.get(`/products?${params.toString()}`);
+        const queryString = params.toString();
+        console.log("Fetching products with query:", queryString || "(no filters)");
+        console.log("Filter state:", { filter, search, minPrice, maxPrice, sortBy });
+
+        const response = await apiClient.get(`/products?${queryString}`);
+        console.log("Backend returned", response.data.length, "products");
         setProducts(response.data);
       } catch (error) {
         console.error("Error fetching products:", error);
@@ -148,6 +155,36 @@ const Products = () => {
                 />
                 <span>Bookmarks</span>
               </label>
+              <label className={filter === "Notebooks" ? "active" : ""}>
+                <input
+                  type="radio"
+                  name="category"
+                  value="Notebooks"
+                  checked={filter === "Notebooks"}
+                  onChange={(e) => setFilter(e.target.value)}
+                />
+                <span>Notebooks</span>
+              </label>
+              <label className={filter === "Cards" ? "active" : ""}>
+                <input
+                  type="radio"
+                  name="category"
+                  value="Cards"
+                  checked={filter === "Cards"}
+                  onChange={(e) => setFilter(e.target.value)}
+                />
+                <span>Cards</span>
+              </label>
+              <label className={filter === "Stickers" ? "active" : ""}>
+                <input
+                  type="radio"
+                  name="category"
+                  value="Stickers"
+                  checked={filter === "Stickers"}
+                  onChange={(e) => setFilter(e.target.value)}
+                />
+                <span>Stickers</span>
+              </label>
               <label className={filter === "Bundles" ? "active" : ""}>
                 <input
                   type="radio"
@@ -209,6 +246,15 @@ const Products = () => {
               <div className="spinner"></div>
               <p>Loading products...</p>
             </div>
+          ) : products.length === 0 && filter !== "all" ? (
+            <div className="no-products">
+              <i className="fas fa-clock"></i>
+              <h3>COMING SOON</h3>
+              <p>This category is on the way. Please check back soon.</p>
+              <button className="btn-secondary" onClick={handleClearFilters}>
+                View All Products
+              </button>
+            </div>
           ) : products.length === 0 ? (
             <div className="no-products">
               <i className="fas fa-inbox"></i>
@@ -221,12 +267,10 @@ const Products = () => {
             <div className="products-grid">
               {products.map((product) => (
                 <div key={product.id} className="product-item">
-                  <Link to={`/product/${product.id}`}>
-                    <ProductCard
-                      product={product}
-                      onAddToCart={handleAddToCart}
-                    />
-                  </Link>
+                  <ProductCard
+                    product={product}
+                    onAddToCart={handleAddToCart}
+                  />
                 </div>
               ))}
             </div>

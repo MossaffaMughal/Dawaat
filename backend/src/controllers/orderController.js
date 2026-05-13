@@ -402,3 +402,58 @@ export const updateHeroBannerUrl = async (req, res) => {
     });
   }
 };
+
+export const getPromoBanner = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT key, value FROM settings WHERE key IN ('promo_banner_text', 'promo_banner_active')`,
+    );
+
+    const map = {};
+    for (const row of result.rows) {
+      map[row.key] = row.value;
+    }
+
+    res.json({
+      promoBannerText: map["promo_banner_text"] || "",
+      isActive: (map["promo_banner_active"] || "false") === "true",
+    });
+  } catch (error) {
+    console.error("Get promo banner error:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching promo banner", error: error.message });
+  }
+};
+
+export const updatePromoBanner = async (req, res) => {
+  try {
+    const { promoBannerText, isActive } = req.body;
+
+    const textVal = String(promoBannerText || "").trim();
+    const activeVal = isActive ? "true" : "false";
+
+    await pool.query(
+      `INSERT INTO settings (key, value, updated_at) VALUES ('promo_banner_text', $1, CURRENT_TIMESTAMP)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
+      [textVal],
+    );
+
+    await pool.query(
+      `INSERT INTO settings (key, value, updated_at) VALUES ('promo_banner_active', $1, CURRENT_TIMESTAMP)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
+      [activeVal],
+    );
+
+    res.json({
+      message: "Promo banner updated successfully",
+      promoBannerText: textVal,
+      isActive,
+    });
+  } catch (error) {
+    console.error("Update promo banner error:", error);
+    res
+      .status(500)
+      .json({ message: "Error updating promo banner", error: error.message });
+  }
+};

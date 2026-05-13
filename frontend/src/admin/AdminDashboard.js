@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import apiClient from "../utils/apiClient";
 import { useAuth } from "../context/AuthContext";
 import AdminReviews from "./AdminReviews";
+import DiscountCodesPanel from "./DiscountCodesPanel";
+import PromoBannerPanel from "./PromoBannerPanel";
 import ConfirmDialog from "../components/ConfirmDialog";
 import OrderDetailsDialog from "../components/OrderDetailsDialog";
 import "../styles/AdminDashboard.css";
@@ -25,6 +27,7 @@ const AdminDashboard = () => {
     name: "",
     description: "",
     price: "",
+    sale_price: "",
     category: "Notebook",
     in_stock: true,
     plain_pages_in_stock: true,
@@ -475,6 +478,10 @@ const AdminDashboard = () => {
       name: product.name,
       description: product.description,
       price: String(product.price), // Ensure price is a string for input field
+      sale_price:
+        product.sale_price !== null && product.sale_price !== undefined
+          ? String(product.sale_price)
+          : "",
       category: product.category,
       in_stock: product.in_stock ?? true,
       plain_pages_in_stock: product.plain_pages_in_stock ?? true,
@@ -555,6 +562,7 @@ const AdminDashboard = () => {
       name: "",
       description: "",
       price: "",
+      sale_price: "",
       category: "Notebook",
       in_stock: true,
       plain_pages_in_stock: true,
@@ -651,6 +659,24 @@ const AdminDashboard = () => {
             }}
           >
             ⭐ Reviews
+          </button>
+          <button
+            className={`admin-menu-item ${activeTab === "discount-codes" ? "active" : ""}`}
+            onClick={() => {
+              console.log("DISCOUNT CODES BUTTON CLICKED");
+              setActiveTab("discount-codes");
+            }}
+          >
+            🏷️ Discount Codes
+          </button>
+          <button
+            className={`admin-menu-item ${activeTab === "promo-banner" ? "active" : ""}`}
+            onClick={() => {
+              console.log("PROMO BANNER BUTTON CLICKED");
+              setActiveTab("promo-banner");
+            }}
+          >
+            📰 Promo Banner
           </button>
           <button
             className={`admin-menu-item ${activeTab === "settings" ? "active" : ""}`}
@@ -790,6 +816,23 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="form-group">
+                  <label>Sale Price (Rs.)</label>
+                  <input
+                    type="number"
+                    name="sale_price"
+                    value={productFormData.sale_price}
+                    onChange={handleProductInputChange}
+                    step="0.01"
+                    min="0"
+                    placeholder="Optional discount price"
+                    inputMode="decimal"
+                  />
+                  <small style={{ color: "#666", fontSize: "12px" }}>
+                    Leave blank if the product is not on sale
+                  </small>
+                </div>
+
+                <div className="form-group">
                   <label>Category</label>
                   <select
                     name="category"
@@ -798,6 +841,9 @@ const AdminDashboard = () => {
                   >
                     <option value="Notebook">Journal</option>
                     <option value="Bookmark">Bookmark</option>
+                    <option value="Notebooks">Notebooks</option>
+                    <option value="Cards">Cards</option>
+                    <option value="Stickers">Stickers</option>
                     <option value="Bundles">Bundles</option>
                   </select>
                 </div>
@@ -1141,6 +1187,12 @@ const AdminDashboard = () => {
 
         {/* REVIEWS TAB */}
         {activeTab === "reviews" && <AdminReviews />}
+
+        {/* DISCOUNT CODES TAB */}
+        {activeTab === "discount-codes" && <DiscountCodesPanel />}
+
+        {/* PROMO BANNER TAB */}
+        {activeTab === "promo-banner" && <PromoBannerPanel />}
 
         {/* SETTINGS TAB */}
         {activeTab === "settings" && (

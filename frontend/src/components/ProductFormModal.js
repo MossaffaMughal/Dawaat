@@ -65,6 +65,19 @@ const ProductFormModal = ({
                 </div>
 
                 <div className="form-group">
+                  <label>Sale Price (Rs.)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="sale_price"
+                    value={formData.sale_price}
+                    onChange={onInputChange}
+                    placeholder="Optional"
+                    min="0"
+                  />
+                </div>
+
+                <div className="form-group">
                   <label>Category</label>
                   <select
                     name="category"
@@ -73,6 +86,9 @@ const ProductFormModal = ({
                   >
                     <option value="Notebook">Journal</option>
                     <option value="Bookmark">Bookmark</option>
+                    <option value="Notebooks">Notebooks</option>
+                    <option value="Cards">Cards</option>
+                    <option value="Stickers">Stickers</option>
                     <option value="Bundles">Bundles</option>
                   </select>
                 </div>

@@ -3,8 +3,12 @@ import pool from "../config/database.js";
 export const getAllProducts = async (req, res) => {
   try {
     const { category, search, minPrice, maxPrice, sortBy } = req.query;
+    
+    console.log("getAllProducts called with filters:", { category, search, minPrice, maxPrice, sortBy });
+    
     let query = `
       SELECT p.*, 
+             COALESCE(p.sale_price, p.price) AS current_price,
              json_agg(
                json_build_object('id', pi.id, 'image_url', pi.image_url, 'alt_text', pi.alt_text, 'display_order', pi.display_order)
                ORDER BY pi.display_order ASC, pi.id ASC
@@ -22,6 +26,7 @@ export const getAllProducts = async (req, res) => {
     if (category) {
       query += ` AND p.category = $${paramCount}`;
       params.push(category);
+      console.log(`Adding category filter: p.category = '${category}'`);
       paramCount++;
     }
 
@@ -34,13 +39,13 @@ export const getAllProducts = async (req, res) => {
 
     // Price range filter
     if (minPrice !== undefined) {
-      query += ` AND p.price >= $${paramCount}`;
+      query += ` AND COALESCE(p.sale_price, p.price) >= $${paramCount}`;
       params.push(parseInt(minPrice));
       paramCount++;
     }
 
     if (maxPrice !== undefined) {
-      query += ` AND p.price <= $${paramCount}`;
+      query += ` AND COALESCE(p.sale_price, p.price) <= $${paramCount}`;
       params.push(parseInt(maxPrice));
       paramCount++;
     }
@@ -49,9 +54,9 @@ export const getAllProducts = async (req, res) => {
 
     // Sorting
     if (sortBy === "price_asc") {
-      query += " ORDER BY p.price ASC";
+      query += " ORDER BY COALESCE(p.sale_price, p.price) ASC";
     } else if (sortBy === "price_desc") {
-      query += " ORDER BY p.price DESC";
+      query += " ORDER BY COALESCE(p.sale_price, p.price) DESC";
     } else if (sortBy === "newest") {
       query += " ORDER BY p.created_at DESC";
     } else {
@@ -59,6 +64,7 @@ export const getAllProducts = async (req, res) => {
     }
 
     const result = await pool.query(query, params);
+    console.log(`Query returned ${result.rows.length} products`);
     res.json(result.rows);
   } catch (error) {
     console.error("Get products error:", error);
@@ -74,6 +80,7 @@ export const getProductById = async (req, res) => {
 
     const result = await pool.query(
       `SELECT p.*, 
+              COALESCE(p.sale_price, p.price) AS current_price,
               json_agg(
                 json_build_object('id', pi.id, 'image_url', pi.image_url, 'alt_text', pi.alt_text, 'display_order', pi.display_order)
                 ORDER BY pi.display_order ASC, pi.id ASC
@@ -106,6 +113,7 @@ export const createProduct = async (req, res) => {
       name,
       description,
       price,
+      sale_price,
       category,
       in_stock,
       plain_pages_in_stock,
@@ -117,14 +125,26 @@ export const createProduct = async (req, res) => {
     if (isNaN(price)) {
       return res.status(400).json({ error: "Price must be a valid number" });
     }
+
+    if (sale_price !== undefined && sale_price !== "") {
+      sale_price = parseInt(sale_price, 10);
+      if (isNaN(sale_price)) {
+        return res
+          .status(400)
+          .json({ error: "Sale price must be a valid number" });
+      }
+    } else {
+      sale_price = null;
+    }
     console.log("[createProduct] Parsed price:", price, "Type:", typeof price);
 
     const result = await pool.query(
-      "INSERT INTO products (name, description, price, category, in_stock, plain_pages_in_stock, lined_pages_in_stock) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+      "INSERT INTO products (name, description, price, sale_price, category, in_stock, plain_pages_in_stock, lined_pages_in_stock) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
       [
         name,
         description,
         price,
+        sale_price,
         category,
         in_stock !== false,
         plain_pages_in_stock !== false,
@@ -151,6 +171,7 @@ export const updateProduct = async (req, res) => {
       name,
       description,
       price,
+      sale_price,
       category,
       in_stock,
       plain_pages_in_stock,
@@ -173,6 +194,19 @@ export const updateProduct = async (req, res) => {
       );
     }
 
+    if (sale_price !== undefined) {
+      if (sale_price === "") {
+        sale_price = null;
+      } else {
+        sale_price = parseInt(sale_price, 10);
+        if (isNaN(sale_price)) {
+          return res
+            .status(400)
+            .json({ error: "Sale price must be a valid number" });
+        }
+      }
+    }
+
     // Build dynamic update query for partial updates
     const updates = [];
     const values = [];
@@ -191,6 +225,11 @@ export const updateProduct = async (req, res) => {
     if (price !== undefined) {
       updates.push(`price = $${paramCount}`);
       values.push(price);
+      paramCount++;
+    }
+    if (sale_price !== undefined) {
+      updates.push(`sale_price = $${paramCount}`);
+      values.push(sale_price);
       paramCount++;
     }
     if (category !== undefined) {

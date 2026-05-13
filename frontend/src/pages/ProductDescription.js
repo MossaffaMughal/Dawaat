@@ -19,6 +19,12 @@ const ProductDescription = () => {
     averageRating: 0,
   });
   const { addToCart } = useCart();
+  const hasSalePrice =
+    product?.sale_price !== undefined &&
+    product?.sale_price !== null &&
+    product?.sale_price !== "";
+  const currentPrice =
+    product?.current_price ?? product?.sale_price ?? product?.price;
 
   const fetchReviewStats = useCallback(async () => {
     try {
@@ -111,7 +117,14 @@ const ProductDescription = () => {
           </div>
 
           <div className="pricing">
-            <span className="price">Rs. {product.price}</span>
+            {hasSalePrice ? (
+              <>
+                <span className="original-price">Rs. {product.price}</span>
+                <span className="sale-price">Rs. {currentPrice}</span>
+              </>
+            ) : (
+              <span className="price">Rs. {currentPrice}</span>
+            )}
           </div>
 
           <p className="description">{product.description}</p>

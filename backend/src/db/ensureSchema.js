@@ -49,6 +49,12 @@ export const ensureDatabaseSchema = async () => {
     ADD COLUMN IF NOT EXISTS lined_pages_in_stock BOOLEAN DEFAULT true;
   `);
 
+  // Add sale_price column for discounted products
+  await pool.query(`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS sale_price INTEGER;
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS product_images (
       id SERIAL PRIMARY KEY,
@@ -232,5 +238,17 @@ export const ensureDatabaseSchema = async () => {
     INSERT INTO settings (key, value)
     VALUES ('hero_banner_url', '/images/banners/hero-banner.jpeg')
     ON CONFLICT (key) DO NOTHING;
+  `);
+
+  // Create discount_codes table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS discount_codes (
+      id SERIAL PRIMARY KEY,
+      code VARCHAR(50) UNIQUE NOT NULL,
+      percentage INTEGER NOT NULL CHECK (percentage >= 0 AND percentage <= 100),
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
   `);
 };

@@ -14,6 +14,7 @@ const AdminProducts = () => {
     name: "",
     description: "",
     price: "",
+    sale_price: "",
     category: "Notebook",
     stock_quantity: "",
     plain_pages_in_stock: true,
@@ -65,6 +66,7 @@ const AdminProducts = () => {
       name: product.name,
       description: product.description,
       price: product.price,
+      sale_price: product.sale_price ?? "",
       category: product.category,
       stock_quantity: product.stock_quantity,
       plain_pages_in_stock: product.plain_pages_in_stock ?? true,
@@ -92,6 +94,7 @@ const AdminProducts = () => {
       name: "",
       description: "",
       price: "",
+      sale_price: "",
       category: "Notebook",
       stock_quantity: "",
       plain_pages_in_stock: true,
@@ -146,7 +149,26 @@ const AdminProducts = () => {
               <tr key={product.id}>
                 <td>{product.name}</td>
                 <td>{product.category}</td>
-                <td>Rs. {product.price}</td>
+                <td>
+                  {product.sale_price !== null &&
+                  product.sale_price !== undefined &&
+                  product.sale_price !== "" ? (
+                    <>
+                      <span
+                        style={{
+                          textDecoration: "line-through",
+                          color: "#888",
+                          marginRight: "8px",
+                        }}
+                      >
+                        Rs. {product.price}
+                      </span>
+                      <strong>Rs. {product.sale_price}</strong>
+                    </>
+                  ) : (
+                    <span>Rs. {product.price}</span>
+                  )}
+                </td>
                 <td>{product.stock_quantity}</td>
                 <td>
                   <span

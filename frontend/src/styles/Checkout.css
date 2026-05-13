@@ -426,6 +426,62 @@
   line-height: 1;
 }
 
+.discount-code-box {
+  margin: 18px 0 10px;
+  padding: 14px;
+  border: 1px solid #eadfd7;
+  border-radius: 10px;
+  background: #fffaf7;
+}
+
+.discount-code-box label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.discount-code-row {
+  display: flex;
+  gap: 10px;
+}
+
+.discount-code-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #d7c8bd;
+  border-radius: 8px;
+}
+
+.apply-discount-btn {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary-color);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.apply-discount-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.discount-message {
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.discount-message.success {
+  color: #1f7a3f;
+}
+
+.discount-message.error {
+  color: #b42318;
+}
+
 /* ===== TOAST ===== */
 .toast-notification {
   position: fixed;

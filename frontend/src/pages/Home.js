@@ -76,7 +76,7 @@ const Home = () => {
                   backgroundImage: "url(/images/categories/journals.jpeg)",
                 }}
               >
-                <span className="category-label">Journals / Notebooks</span>
+                <span className="category-label">Journals</span>
               </div>
             </div>
           </Link>
@@ -89,6 +89,45 @@ const Home = () => {
                 }}
               >
                 <span className="category-label">Bookmarks</span>
+              </div>
+            </div>
+          </Link>
+          <Link
+            to="/products?category=Notebooks"
+            className="category-card-link"
+          >
+            <div className="category-card">
+              <div
+                className="category-image"
+                style={{
+                  backgroundImage: "url(/images/categories/notebooks.jpeg)",
+                }}
+              >
+                <span className="category-label">Notebooks</span>
+              </div>
+            </div>
+          </Link>
+          <Link to="/products?category=Cards" className="category-card-link">
+            <div className="category-card">
+              <div
+                className="category-image"
+                style={{
+                  backgroundImage: "url(/images/categories/cards.jpeg)",
+                }}
+              >
+                <span className="category-label">Cards</span>
+              </div>
+            </div>
+          </Link>
+          <Link to="/products?category=Stickers" className="category-card-link">
+            <div className="category-card">
+              <div
+                className="category-image"
+                style={{
+                  backgroundImage: "url(/images/categories/stickers.jpeg)",
+                }}
+              >
+                <span className="category-label">Stickers</span>
               </div>
             </div>
           </Link>
@@ -109,6 +148,13 @@ const Home = () => {
                   .slice(0, 3),
                 ...products
                   .filter((p) => p.category === "Bookmark")
+                  .slice(0, 3),
+                ...products
+                  .filter((p) => p.category === "Notebooks")
+                  .slice(0, 3),
+                ...products.filter((p) => p.category === "Cards").slice(0, 3),
+                ...products
+                  .filter((p) => p.category === "Stickers")
                   .slice(0, 3),
               ].map((product) => (
                 <ProductCard

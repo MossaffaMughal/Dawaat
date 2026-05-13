@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import apiClient from "../utils/apiClient";
 import "../styles/Header.css";
 
 const Header = () => {
@@ -43,8 +44,48 @@ const Header = () => {
     return null;
   };
 
+  const [promoText, setPromoText] = useState("");
+  const [promoActive, setPromoActive] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchPromo = async () => {
+      try {
+        const res = await apiClient.get("/orders/promo-banner");
+        if (!mounted) return;
+        const text = res.data?.promoBannerText || "";
+        const active = !!res.data?.isActive;
+        setPromoText(text);
+        setPromoActive(active);
+      } catch (err) {
+        // fail silently
+        console.error("Error fetching promo banner:", err?.message || err);
+      }
+    };
+    fetchPromo();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <header className="header">
+      {promoActive && promoText && (
+        <div className="promo-banner" aria-label="Promotional banner">
+          <div className="promo-banner-track">
+            <div className="promo-content">
+              {[0, 1, 2, 3].map((i) => (
+                <span key={i}>{promoText}</span>
+              ))}
+            </div>
+            <div className="promo-content" aria-hidden="true">
+              {[0, 1, 2, 3].map((i) => (
+                <span key={i}>{promoText}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       <div className="header-main">
         <div className="navbar">
           <Link to="/" className="logo">
