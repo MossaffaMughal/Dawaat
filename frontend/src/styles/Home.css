@@ -113,6 +113,8 @@
 @media (max-width: 768px) {
   .categories-grid {
     grid-template-columns: 1fr;
+    gap: 15px;
+    margin-bottom: 30px;
   }
 }
 
@@ -156,6 +158,12 @@
   background-repeat: no-repeat;
   position: relative;
   overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .category-image {
+    height: 200px;
+  }
 }
 
 .category-image::before {
@@ -521,15 +529,17 @@
 
   .categories-grid {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 12px;
+    margin-bottom: 20px;
   }
 
   .category-image {
-    aspect-ratio: 16 / 9;
+    height: 150px;
+    min-height: 150px;
   }
 
   .category-label {
-    font-size: 13px;
+    font-size: 14px;
     padding: 6px 10px;
   }
 
