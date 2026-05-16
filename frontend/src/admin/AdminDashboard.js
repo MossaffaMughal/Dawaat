@@ -151,10 +151,7 @@ const AdminDashboard = () => {
       formData.append("image", file);
 
       const response = await apiClient.post("/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+        const response = await apiClient.post("/upload", formData);
 
       const uploadedUrl = String(response.data?.imageUrl || "").trim();
       if (uploadedUrl) {
@@ -375,10 +372,7 @@ const AdminDashboard = () => {
 
           console.log("Making POST request to /upload...");
           const response = await apiClient.post("/upload", formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          });
+            const response = await apiClient.post("/upload", formData);
 
           console.log("Upload response:", response.data);
 
