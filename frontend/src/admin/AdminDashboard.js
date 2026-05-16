@@ -352,21 +352,7 @@ const AdminDashboard = () => {
         return;
       }
 
-      // Validate file sizes (10MB max per file)
-      const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-      const oversizedFiles = files.filter((file) => file.size > MAX_FILE_SIZE);
-
-      if (oversizedFiles.length > 0) {
-        const fileNames = oversizedFiles.map((f) => f.name).join(", ");
-        setUploadError(
-          `File(s) too large: ${fileNames}. Maximum size is 10MB per image.`,
-        );
-        setTimeout(() => setUploadError(""), 5000);
-        if (e.target) {
-          e.target.value = "";
-        }
-        return;
-      }
+      // Files will be compressed server-side; skip client-side 10MB size check
 
       setUploadingImage(true);
       setUploadError("");
@@ -905,7 +891,7 @@ const AdminDashboard = () => {
 
                 <div className="form-group">
                   <label htmlFor="product-images">
-                    Product Images (Max 6 images, 10MB each)
+                    Product Images (Max 6 images — images will be compressed on upload)
                   </label>
                   <input
                     id="product-images"

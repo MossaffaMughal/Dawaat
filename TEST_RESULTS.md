@@ -332,7 +332,7 @@ src/
 - Filters: Dynamic query building with parameterized values
 - Wishlist: Context uses Set for O(1) lookup performance
 - Orders: Transaction support for consistency
-- Images: 10MB file limit, 6 images max per product
+ - Images: server compresses uploads; 6 images max per product
 
 ---
 
