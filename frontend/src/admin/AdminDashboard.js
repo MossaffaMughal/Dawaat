@@ -150,8 +150,7 @@ const AdminDashboard = () => {
       const formData = new FormData();
       formData.append("image", file);
 
-      const response = await apiClient.post("/upload", formData, {
-        const response = await apiClient.post("/upload", formData);
+      const response = await apiClient.post("/upload", formData);
 
       const uploadedUrl = String(response.data?.imageUrl || "").trim();
       if (uploadedUrl) {
@@ -371,8 +370,7 @@ const AdminDashboard = () => {
           formData.append("image", file);
 
           console.log("Making POST request to /upload...");
-          const response = await apiClient.post("/upload", formData, {
-            const response = await apiClient.post("/upload", formData);
+          const response = await apiClient.post("/upload", formData);
 
           console.log("Upload response:", response.data);
 
