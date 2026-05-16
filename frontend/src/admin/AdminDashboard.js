@@ -891,7 +891,8 @@ const AdminDashboard = () => {
 
                 <div className="form-group">
                   <label htmlFor="product-images">
-                    Product Images (Max 6 images — images will be compressed on upload)
+                    Product Images (Max 6 images — images will be compressed on
+                    upload)
                   </label>
                   <input
                     id="product-images"
