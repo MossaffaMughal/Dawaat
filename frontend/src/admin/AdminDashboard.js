@@ -6,6 +6,7 @@ import DiscountCodesPanel from "./DiscountCodesPanel";
 import PromoBannerPanel from "./PromoBannerPanel";
 import ConfirmDialog from "../components/ConfirmDialog";
 import OrderDetailsDialog from "../components/OrderDetailsDialog";
+import { compressImageFile } from "../utils/compressImage";
 import "../styles/AdminDashboard.css";
 
 const AdminDashboard = () => {
@@ -147,8 +148,15 @@ const AdminDashboard = () => {
 
       setUploadingHeroBanner(true);
 
+      const compressedFile = await compressImageFile(file, {
+        maxDimension: 1600,
+        maxBytes: 3.5 * 1024 * 1024,
+        quality: 0.82,
+        mimeType: "image/webp",
+      });
+
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append("image", compressedFile);
 
       const response = await apiClient.post("/upload", formData);
 
@@ -362,12 +370,19 @@ const AdminDashboard = () => {
       for (let index = 0; index < files.length; index++) {
         const file = files[index];
         try {
+          const compressedFile = await compressImageFile(file, {
+            maxDimension: 1600,
+            maxBytes: 3.5 * 1024 * 1024,
+            quality: 0.82,
+            mimeType: "image/webp",
+          });
+
           console.log(
-            `Uploading file ${index + 1}/${files.length}: ${file.name} (${Math.round(file.size / 1024)}KB)`,
+            `Uploading file ${index + 1}/${files.length}: ${file.name} (${Math.round(file.size / 1024)}KB) -> ${compressedFile.name} (${Math.round(compressedFile.size / 1024)}KB)`,
           );
 
           const formData = new FormData();
-          formData.append("image", file);
+          formData.append("image", compressedFile);
 
           console.log("Making POST request to /upload...");
           const response = await apiClient.post("/upload", formData);
