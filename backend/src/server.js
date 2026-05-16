@@ -110,8 +110,10 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Increase payload limits for file uploads
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 app.use(async (req, res, next) => {
   try {
@@ -137,8 +139,9 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  // Allow uploads up to 20MB; images will be compressed server-side
-  limits: { fileSize: 20 * 1024 * 1024 },
+  // Allow uploads up to 50MB; images will be compressed server-side
+  // Vercel max payload is 256MB, but we'll use 50MB for safety
+  limits: { fileSize: 50 * 1024 * 1024 },
 });
 
 // Routes
@@ -189,12 +192,34 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Global error handler
+// Global error handler - ensure CORS headers are always set
 app.use((err, req, res, next) => {
   console.error("\n========== GLOBAL ERROR HANDLER ==========");
   console.error("Error:", err.message);
   console.error("Stack:", err.stack);
   console.error("=========================================\n");
+
+  // Ensure CORS headers are set even on errors
+  const origin = req.headers.origin;
+  const allowed = isAllowedFrontendOrigin(origin);
+  if (allowed) {
+    res.setHeader("Access-Control-Allow-Origin", origin || "*");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+  }
+
+  // Handle multer errors specifically
+  if (err.code === "LIMIT_FILE_SIZE") {
+    console.error("File size limit exceeded:", err.limit);
+    return res.status(413).json({
+      message: `File too large. Maximum size is ${Math.round(err.limit / 1024 / 1024)}MB`,
+    });
+  }
+
+  if (err.code === "LIMIT_PART_COUNT") {
+    return res.status(400).json({
+      message: "Too many parts",
+    });
+  }
 
   res.status(err.status || 500).json({
     message: err.message || "Internal server error",

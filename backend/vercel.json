@@ -2,7 +2,9 @@
   "version": 2,
   "functions": {
     "api/index.js": {
-      "excludeFiles": "public/products/**"
+      "excludeFiles": "public/products/**",
+      "memory": 3008,
+      "maxDuration": 60
     }
   },
   "rewrites": [
