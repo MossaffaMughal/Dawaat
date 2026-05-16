@@ -82,30 +82,33 @@ const isAllowedFrontendOrigin = (origin) => {
   return allowed;
 };
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      const allowed = isAllowedFrontendOrigin(origin);
-      if (allowed) {
-        console.log(`[CORS] ✅ Origin ALLOWED:`, origin);
-        return callback(null, true);
-      }
-      console.error(`[CORS] ❌ Origin BLOCKED:`, origin);
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-      "Accept",
-      "Accept-Language",
-    ],
-    exposedHeaders: ["Content-Length", "X-JSON-Response"],
-    maxAge: 3600,
-  }),
-);
+// CORS configuration for all routes
+const corsOptions = {
+  origin: (origin, callback) => {
+    const allowed = isAllowedFrontendOrigin(origin);
+    if (allowed) {
+      console.log(`[CORS] ✅ Origin ALLOWED:`, origin);
+      return callback(null, true);
+    }
+    console.error(`[CORS] ❌ Origin BLOCKED:`, origin);
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Accept-Language",
+    "Content-Length",
+    "X-CSRF-Token",
+  ],
+  exposedHeaders: ["Content-Length", "X-JSON-Response", "Content-Type"],
+  maxAge: 86400,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -146,6 +149,9 @@ app.use("/api/discount-codes", discountCodeRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/contacts", contactRoutes);
 app.use("/api/reviews", reviewRoutes);
+
+// Explicit OPTIONS handler for preflight requests
+app.options("/api/upload", cors(corsOptions));
 
 app.post("/api/upload", upload.single("image"), async (req, res) => {
   console.log("\n========== IMAGE UPLOAD TO SUPABASE ==========");
