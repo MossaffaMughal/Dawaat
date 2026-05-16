@@ -85,6 +85,7 @@ const isAllowedFrontendOrigin = (origin) => {
 // CORS configuration for all routes
 const corsOptions = {
   origin: (origin, callback) => {
+    console.log(`[CORS] 🔍 Checking origin:`, origin);
     const allowed = isAllowedFrontendOrigin(origin);
     if (allowed) {
       console.log(`[CORS] ✅ Origin ALLOWED:`, origin);
