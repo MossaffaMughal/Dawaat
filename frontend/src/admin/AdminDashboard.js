@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import apiClient from "../utils/apiClient";
 import { useAuth } from "../context/AuthContext";
 import AdminReviews from "./AdminReviews";
@@ -64,7 +64,6 @@ const AdminDashboard = () => {
   const [heroBannerUrlInput, setHeroBannerUrlInput] = useState("");
   const [savingHeroBanner, setSavingHeroBanner] = useState(false);
   const [uploadingHeroBanner, setUploadingHeroBanner] = useState(false);
-  const draggedProductRef = useRef(null);
 
   useEffect(() => {
     fetchAdminData();
