@@ -151,9 +151,12 @@ const Header = () => {
         <nav className="main-nav">
           <Link to="/">Home</Link>
           <Link to="/products">All Products</Link>
-          <Link to="/products?category=Notebook">Journals</Link>
-          <Link to="/products?category=Bookmark">Bookmarks</Link>
           <Link to="/products?category=Bundles">Bundles</Link>
+          <Link to="/products?category=Notebook">Journals</Link>
+          <Link to="/products?category=Notebooks">Notebooks</Link>
+          <Link to="/products?category=Cards">Cards</Link>
+          <Link to="/products?category=Bookmark">Bookmarks</Link>
+          <Link to="/products?category=Stickers">Stickers</Link>
         </nav>
       </div>
     </header>

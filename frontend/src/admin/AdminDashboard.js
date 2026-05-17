@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import apiClient from "../utils/apiClient";
 import { useAuth } from "../context/AuthContext";
 import AdminReviews from "./AdminReviews";
@@ -31,7 +31,7 @@ const AdminDashboard = () => {
     sale_price: "",
     category: "Notebook",
     in_stock: true,
-    plain_pages_in_stock: true,
+    dotted_pages_in_stock: true,
     lined_pages_in_stock: true,
   });
   const [uploadedImages, setUploadedImages] = useState([]);
@@ -64,6 +64,7 @@ const AdminDashboard = () => {
   const [heroBannerUrlInput, setHeroBannerUrlInput] = useState("");
   const [savingHeroBanner, setSavingHeroBanner] = useState(false);
   const [uploadingHeroBanner, setUploadingHeroBanner] = useState(false);
+  const draggedProductRef = useRef(null);
 
   useEffect(() => {
     fetchAdminData();
@@ -222,7 +223,13 @@ const AdminDashboard = () => {
       ]);
 
       setOrders(ordersRes.data);
-      setProducts(productsRes.data);
+      const sortedProducts = [...productsRes.data].sort(
+        (a, b) =>
+          String(a.category || "").localeCompare(String(b.category || "")) ||
+          (a.sort_order ?? 0) - (b.sort_order ?? 0) ||
+          a.id - b.id,
+      );
+      setProducts(sortedProducts);
       setStats({
         totalOrders: ordersRes.data.length,
         totalRevenue: ordersRes.data.reduce(
@@ -337,6 +344,33 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Error saving product:", error);
       showNotification("Error saving product: " + error.message, "error");
+    }
+  };
+
+  const productsByCategory = products.reduce((acc, product) => {
+    const category = product.category || "Uncategorized";
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(product);
+    return acc;
+  }, {});
+
+  const getCategoryDisplayName = (category) => {
+    if (category === "Notebook") {
+      return "Journal";
+    }
+
+    return category;
+  };
+
+  const handleMoveProduct = async (productId, direction) => {
+    try {
+      await apiClient.patch(`/products/${productId}/move`, { direction });
+      fetchAdminData();
+    } catch (error) {
+      console.error("Error moving product:", error);
+      showNotification("Error moving product", "error");
     }
   };
 
@@ -477,7 +511,7 @@ const AdminDashboard = () => {
           : "",
       category: product.category,
       in_stock: product.in_stock ?? true,
-      plain_pages_in_stock: product.plain_pages_in_stock ?? true,
+      dotted_pages_in_stock: product.dotted_pages_in_stock ?? true,
       lined_pages_in_stock: product.lined_pages_in_stock ?? true,
     });
     // Load existing product images for editing
@@ -558,7 +592,7 @@ const AdminDashboard = () => {
       sale_price: "",
       category: "Notebook",
       in_stock: true,
-      plain_pages_in_stock: true,
+      dotted_pages_in_stock: true,
       lined_pages_in_stock: true,
     });
     setUploadedImages([]);
@@ -858,22 +892,24 @@ const AdminDashboard = () => {
                   </label>
                 </div>
 
-                {productFormData.category === "Notebook" && (
+                {String(productFormData.category || "")
+                  .toLowerCase()
+                  .includes("notebook") && (
                   <div className="form-row">
                     <div className="form-group">
                       <label>
                         <input
                           type="checkbox"
-                          name="plain_pages_in_stock"
-                          checked={productFormData.plain_pages_in_stock}
+                          name="dotted_pages_in_stock"
+                          checked={productFormData.dotted_pages_in_stock}
                           onChange={(e) =>
                             setProductFormData((prev) => ({
                               ...prev,
-                              plain_pages_in_stock: e.target.checked,
+                              dotted_pages_in_stock: e.target.checked,
                             }))
                           }
                         />
-                        Plain Pages In Stock
+                        Dotted Pages In Stock
                       </label>
                     </div>
 
@@ -1026,91 +1062,119 @@ const AdminDashboard = () => {
             {loading ? (
               <p>Loading...</p>
             ) : (
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Price</th>
-                    <th>Category</th>
-                    <th>Plain Pages</th>
-                    <th>Lined Pages</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((product) => (
-                    <tr key={product.id}>
-                      <td>{product.id}</td>
-                      <td>{product.name}</td>
-                      <td>Rs. {product.price}</td>
-                      <td>{product.category}</td>
-                      <td>
-                        <span
-                          className={
-                            product.plain_pages_in_stock
-                              ? "in-stock"
-                              : "out-of-stock"
-                          }
-                        >
-                          {product.plain_pages_in_stock
-                            ? "✓ In Stock"
-                            : "✕ Out"}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={
-                            product.lined_pages_in_stock
-                              ? "in-stock"
-                              : "out-of-stock"
-                          }
-                        >
-                          {product.lined_pages_in_stock
-                            ? "✓ In Stock"
-                            : "✕ Out"}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className={`stock-toggle-btn ${
-                            product.in_stock ? "in-stock" : "out-of-stock"
-                          }`}
-                          onClick={() =>
-                            handleToggleStock(product.id, product.in_stock)
-                          }
-                          title="Click to toggle stock status"
-                        >
-                          <span className="toggle-icon">
-                            {product.in_stock ? "✓" : "✕"}
-                          </span>
-                          <span className="toggle-text">
-                            {product.in_stock ? "In Stock" : "Out of Stock"}
-                          </span>
-                        </button>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="edit-btn"
-                          onClick={() => handleEditProduct(product)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          className="delete-btn"
-                          onClick={() => handleDeleteProduct(product.id)}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
+              <div className="products-category-board">
+                {Object.keys(productsByCategory)
+                  .sort((a, b) => a.localeCompare(b))
+                  .map((category) => (
+                    <section
+                      key={category}
+                      className="products-category-section"
+                    >
+                      <div className="products-category-header">
+                        <h3>{getCategoryDisplayName(category)}</h3>
+                        <span>{productsByCategory[category].length} items</span>
+                      </div>
+
+                      <div className="products-category-rows">
+                        {productsByCategory[category].map((product, index) => (
+                          <div
+                            key={product.id}
+                            className="products-category-row"
+                          >
+                            <div className="product-move-buttons">
+                              <button
+                                type="button"
+                                className="product-move-btn"
+                                onClick={() =>
+                                  handleMoveProduct(product.id, "up")
+                                }
+                                title="Move up"
+                                disabled={index === 0}
+                              >
+                                ↑
+                              </button>
+                              <button
+                                type="button"
+                                className="product-move-btn"
+                                onClick={() =>
+                                  handleMoveProduct(product.id, "down")
+                                }
+                                title="Move down"
+                                disabled={
+                                  index ===
+                                  productsByCategory[category].length - 1
+                                }
+                              >
+                                ↓
+                              </button>
+                            </div>
+                            <div className="product-row-main">
+                              <div className="product-row-title">
+                                <span className="product-row-id">
+                                  #{product.id}
+                                </span>
+                                <strong>{product.name}</strong>
+                              </div>
+                              <div className="product-row-meta">
+                                <span>Rs. {product.price}</span>
+                                <span>
+                                  {product.dotted_pages_in_stock
+                                    ? "Dotted ✓"
+                                    : "Dotted ✕"}
+                                </span>
+                                <span>
+                                  {product.lined_pages_in_stock
+                                    ? "Lined ✓"
+                                    : "Lined ✕"}
+                                </span>
+                                <button
+                                  type="button"
+                                  className={`stock-toggle-btn ${
+                                    product.in_stock
+                                      ? "in-stock"
+                                      : "out-of-stock"
+                                  }`}
+                                  onClick={() =>
+                                    handleToggleStock(
+                                      product.id,
+                                      product.in_stock,
+                                    )
+                                  }
+                                  title="Click to toggle stock status"
+                                >
+                                  <span className="toggle-icon">
+                                    {product.in_stock ? "✓" : "✕"}
+                                  </span>
+                                  <span className="toggle-text">
+                                    {product.in_stock
+                                      ? "In Stock"
+                                      : "Out of Stock"}
+                                  </span>
+                                </button>
+                              </div>
+                            </div>
+                            <div className="product-row-actions">
+                              <button
+                                type="button"
+                                className="edit-btn"
+                                onClick={() => handleEditProduct(product)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="delete-btn"
+                                onClick={() => handleDeleteProduct(product.id)}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
                   ))}
-                </tbody>
-              </table>
+              </div>
             )}
           </div>
         )}

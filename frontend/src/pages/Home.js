@@ -144,7 +144,11 @@ const Home = () => {
             <div className="products-grid">
               {[
                 ...products
-                  .filter((p) => p.category === "Notebook")
+                  .filter((p) =>
+                    String(p.category || "")
+                      .toLowerCase()
+                      .includes("notebook"),
+                  )
                   .slice(0, 3),
                 ...products
                   .filter((p) => p.category === "Bookmark")

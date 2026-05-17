@@ -39,6 +39,7 @@ const OrderDetailsDialog = ({
       .toLowerCase();
     if (variant === "lined") return "Lined pages";
     if (variant === "plain") return "Plain pages";
+    if (variant === "dotted") return "Dotted pages";
     if (variant) return item.variant;
     return "-";
   };

@@ -25,13 +25,24 @@ const Products = () => {
     const maxPriceParam = searchParams.get("maxPrice");
     const sortByParam = searchParams.get("sortBy");
 
-    console.log("URL Params - category:", categoryParam, "search:", searchParam, "minPrice:", minPriceParam, "maxPrice:", maxPriceParam, "sortBy:", sortByParam);
+    console.log(
+      "URL Params - category:",
+      categoryParam,
+      "search:",
+      searchParam,
+      "minPrice:",
+      minPriceParam,
+      "maxPrice:",
+      maxPriceParam,
+      "sortBy:",
+      sortByParam,
+    );
 
     setFilter(categoryParam || "all");
     setSearch(searchParam || "");
     setMinPrice(minPriceParam || "");
     setMaxPrice(maxPriceParam || "");
-    setSortBy(sortByParam || "newest");
+    setSortBy(sortByParam || "");
   }, [searchParams]);
 
   useEffect(() => {
@@ -57,8 +68,17 @@ const Products = () => {
         }
 
         const queryString = params.toString();
-        console.log("Fetching products with query:", queryString || "(no filters)");
-        console.log("Filter state:", { filter, search, minPrice, maxPrice, sortBy });
+        console.log(
+          "Fetching products with query:",
+          queryString || "(no filters)",
+        );
+        console.log("Filter state:", {
+          filter,
+          search,
+          minPrice,
+          maxPrice,
+          sortBy,
+        });
 
         const response = await apiClient.get(`/products?${queryString}`);
         console.log("Backend returned", response.data.length, "products");

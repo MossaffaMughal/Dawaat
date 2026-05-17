@@ -7,7 +7,7 @@ import "../styles/ProductCard.css";
 const ProductCard = ({ product, onAddToCart }) => {
   const [mainImage, setMainImage] = useState(null);
   const [showVariantModal, setShowVariantModal] = useState(false);
-  const [selectedVariant, setSelectedVariant] = useState("plain");
+  const [selectedVariant, setSelectedVariant] = useState("dotted");
   const { isInWishlist, toggleWishlist } = useWishlist();
   const hasSalePrice =
     product.sale_price !== undefined &&
@@ -22,7 +22,9 @@ const ProductCard = ({ product, onAddToCart }) => {
     }
   }, [product]);
 
-  const isJournal = product.category === "Notebook";
+  const isJournal = String(product.category || "")
+    .toLowerCase()
+    .includes("notebook");
 
   const handleAddToCart = () => {
     if (isJournal) {
@@ -104,31 +106,31 @@ const ProductCard = ({ product, onAddToCart }) => {
         >
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3>Choose Page Type</h3>
-            <p>Select between lined or plain pages</p>
+            <p>Select between dotted or lined pages</p>
             <div className="variant-options">
               <label
-                className={`variant-option ${!product.plain_pages_in_stock ? "disabled" : ""}`}
+                className={`variant-option ${!product.dotted_pages_in_stock ? "disabled" : ""}`}
                 title={
-                  !product.plain_pages_in_stock
-                    ? "Plain pages are out of stock"
+                  !product.dotted_pages_in_stock
+                    ? "Dotted pages are out of stock"
                     : ""
                 }
               >
                 <input
                   type="radio"
                   name="pageType"
-                  value="plain"
-                  checked={selectedVariant === "plain"}
+                  value="dotted"
+                  checked={selectedVariant === "dotted"}
                   onChange={(e) => {
-                    if (product.plain_pages_in_stock) {
+                    if (product.dotted_pages_in_stock) {
                       setSelectedVariant(e.target.value);
                     }
                   }}
-                  disabled={!product.plain_pages_in_stock}
+                  disabled={!product.dotted_pages_in_stock}
                 />
                 <span>
-                  Plain Pages{" "}
-                  {!product.plain_pages_in_stock && (
+                  Dotted Pages{" "}
+                  {!product.dotted_pages_in_stock && (
                     <span className="out-of-stock">(Out of Stock)</span>
                   )}
                 </span>
@@ -166,8 +168,8 @@ const ProductCard = ({ product, onAddToCart }) => {
                 className="btn-confirm"
                 onClick={handleVariantSelect}
                 disabled={
-                  (selectedVariant === "plain" &&
-                    !product.plain_pages_in_stock) ||
+                  (selectedVariant === "dotted" &&
+                    !product.dotted_pages_in_stock) ||
                   (selectedVariant === "lined" && !product.lined_pages_in_stock)
                 }
               >

@@ -6,6 +6,8 @@ import {
   updateProduct,
   deleteProduct,
   addProductImage,
+  moveProduct,
+  reorderProducts,
   deleteProductImage,
 } from "../controllers/productController.js";
 import { authenticateToken, authorizeAdmin } from "../middleware/auth.js";
@@ -19,7 +21,9 @@ router.get("/:id", getProductById);
 // Admin routes
 router.post("/", authenticateToken, authorizeAdmin, createProduct);
 router.put("/:id", authenticateToken, authorizeAdmin, updateProduct);
+router.patch("/:id/move", authenticateToken, authorizeAdmin, moveProduct);
 router.delete("/:id", authenticateToken, authorizeAdmin, deleteProduct);
+router.patch("/reorder", authenticateToken, authorizeAdmin, reorderProducts);
 
 // Product images
 router.post("/images/add", authenticateToken, authorizeAdmin, addProductImage);

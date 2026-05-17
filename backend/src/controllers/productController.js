@@ -3,9 +3,15 @@ import pool from "../config/database.js";
 export const getAllProducts = async (req, res) => {
   try {
     const { category, search, minPrice, maxPrice, sortBy } = req.query;
-    
-    console.log("getAllProducts called with filters:", { category, search, minPrice, maxPrice, sortBy });
-    
+
+    console.log("getAllProducts called with filters:", {
+      category,
+      search,
+      minPrice,
+      maxPrice,
+      sortBy,
+    });
+
     let query = `
       SELECT p.*, 
              COALESCE(p.sale_price, p.price) AS current_price,
@@ -52,7 +58,7 @@ export const getAllProducts = async (req, res) => {
 
     query += " GROUP BY p.id";
 
-    // Sorting
+    // Sorting (default by sort_order within category)
     if (sortBy === "price_asc") {
       query += " ORDER BY COALESCE(p.sale_price, p.price) ASC";
     } else if (sortBy === "price_desc") {
@@ -60,7 +66,7 @@ export const getAllProducts = async (req, res) => {
     } else if (sortBy === "newest") {
       query += " ORDER BY p.created_at DESC";
     } else {
-      query += " ORDER BY p.id";
+      query += " ORDER BY p.sort_order ASC, p.id ASC";
     }
 
     const result = await pool.query(query, params);
@@ -118,6 +124,7 @@ export const createProduct = async (req, res) => {
       in_stock,
       plain_pages_in_stock,
       lined_pages_in_stock,
+      dotted_pages_in_stock,
     } = req.body;
 
     // Ensure price is a number
@@ -138,8 +145,18 @@ export const createProduct = async (req, res) => {
     }
     console.log("[createProduct] Parsed price:", price, "Type:", typeof price);
 
+    // Determine next sort_order for this category so new products append to the end
+    let sortOrder = 0;
+    if (category) {
+      const maxRes = await pool.query(
+        "SELECT COALESCE(MAX(sort_order), -1) as max_sort FROM products WHERE category = $1",
+        [category],
+      );
+      sortOrder = (maxRes.rows[0]?.max_sort ?? -1) + 1;
+    }
+
     const result = await pool.query(
-      "INSERT INTO products (name, description, price, sale_price, category, in_stock, plain_pages_in_stock, lined_pages_in_stock) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *",
+      "INSERT INTO products (name, description, price, sale_price, category, in_stock, plain_pages_in_stock, lined_pages_in_stock, dotted_pages_in_stock, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
       [
         name,
         description,
@@ -149,6 +166,8 @@ export const createProduct = async (req, res) => {
         in_stock !== false,
         plain_pages_in_stock !== false,
         lined_pages_in_stock !== false,
+        dotted_pages_in_stock !== false,
+        sortOrder,
       ],
     );
 
@@ -176,6 +195,7 @@ export const updateProduct = async (req, res) => {
       in_stock,
       plain_pages_in_stock,
       lined_pages_in_stock,
+      dotted_pages_in_stock,
     } = req.body;
 
     console.log("[updateProduct] Raw request body:", req.body);
@@ -252,6 +272,16 @@ export const updateProduct = async (req, res) => {
       values.push(lined_pages_in_stock !== false);
       paramCount++;
     }
+    if (dotted_pages_in_stock !== undefined) {
+      updates.push(`dotted_pages_in_stock = $${paramCount}`);
+      values.push(dotted_pages_in_stock !== false);
+      paramCount++;
+    }
+    if (req.body.sort_order !== undefined) {
+      updates.push(`sort_order = $${paramCount}`);
+      values.push(parseInt(req.body.sort_order, 10));
+      paramCount++;
+    }
 
     if (updates.length === 0) {
       return res.status(400).json({ message: "No fields to update" });
@@ -277,6 +307,98 @@ export const updateProduct = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error updating product", error: error.message });
+  }
+};
+
+export const moveProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { direction } = req.body; // 'up' or 'down'
+
+    if (!["up", "down"].includes(direction)) {
+      return res.status(400).json({ message: "Invalid direction" });
+    }
+
+    const curRes = await pool.query(
+      "SELECT id, category, sort_order FROM products WHERE id = $1",
+      [id],
+    );
+    if (curRes.rows.length === 0) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const product = curRes.rows[0];
+    let neighborQuery;
+    if (direction === "up") {
+      neighborQuery = `SELECT id, sort_order FROM products WHERE category = $1 AND sort_order < $2 ORDER BY sort_order DESC LIMIT 1`;
+    } else {
+      neighborQuery = `SELECT id, sort_order FROM products WHERE category = $1 AND sort_order > $2 ORDER BY sort_order ASC LIMIT 1`;
+    }
+
+    const neighborRes = await pool.query(neighborQuery, [
+      product.category,
+      product.sort_order,
+    ]);
+    if (neighborRes.rows.length === 0) {
+      return res.status(400).json({ message: "Cannot move further" });
+    }
+
+    const neighbor = neighborRes.rows[0];
+
+    // Swap sort_order values
+    await pool.query("UPDATE products SET sort_order = $1 WHERE id = $2", [
+      neighbor.sort_order,
+      product.id,
+    ]);
+    await pool.query("UPDATE products SET sort_order = $1 WHERE id = $2", [
+      product.sort_order,
+      neighbor.id,
+    ]);
+
+    res.json({ message: "Product moved" });
+  } catch (error) {
+    console.error("Move product error:", error);
+    res
+      .status(500)
+      .json({ message: "Error moving product", error: error.message });
+  }
+};
+
+export const reorderProducts = async (req, res) => {
+  try {
+    const { category, orderedIds } = req.body;
+
+    if (!category || !Array.isArray(orderedIds)) {
+      return res
+        .status(400)
+        .json({ message: "category and orderedIds required" });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      for (let i = 0; i < orderedIds.length; i++) {
+        const id = orderedIds[i];
+        await client.query(
+          "UPDATE products SET sort_order = $1 WHERE id = $2 AND category = $3",
+          [i, id, category],
+        );
+      }
+
+      await client.query("COMMIT");
+      res.json({ message: "Reordered" });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error("Reorder products error:", error);
+    res
+      .status(500)
+      .json({ message: "Error reordering products", error: error.message });
   }
 };
 

@@ -51,7 +51,9 @@ const ProductDescription = () => {
 
   const handleAddToCart = () => {
     if (product) {
-      const isJournal = product.category === "Notebook";
+      const isJournal = String(product.category || "")
+        .toLowerCase()
+        .includes("notebook");
 
       if (isJournal && !selectedVariant) {
         setNotification("Please select a page type");
@@ -146,27 +148,29 @@ const ProductDescription = () => {
             </div>
           </div>
 
-          {product.category === "Notebook" && (
+          {String(product.category || "")
+            .toLowerCase()
+            .includes("notebook") && (
             <div className="page-type-selector">
               <label className="selector-label">Choose Page Type:</label>
               <div className="page-options">
                 <button
-                  className={`page-option ${selectedVariant === "plain" ? "selected" : ""} ${!product.plain_pages_in_stock ? "disabled" : ""}`}
+                  className={`page-option ${selectedVariant === "dotted" ? "selected" : ""} ${!product.dotted_pages_in_stock ? "disabled" : ""}`}
                   onClick={() => {
-                    if (product.plain_pages_in_stock) {
-                      setSelectedVariant("plain");
+                    if (product.dotted_pages_in_stock) {
+                      setSelectedVariant("dotted");
                     }
                   }}
-                  disabled={!product.plain_pages_in_stock}
+                  disabled={!product.dotted_pages_in_stock}
                   title={
-                    !product.plain_pages_in_stock
-                      ? "Plain pages are out of stock"
+                    !product.dotted_pages_in_stock
+                      ? "Dotted pages are out of stock"
                       : ""
                   }
                 >
-                  <span className="option-icon">□</span>
-                  <span className="option-text">Plain Pages</span>
-                  {!product.plain_pages_in_stock && (
+                  <span className="option-icon">•</span>
+                  <span className="option-text">Dotted Pages</span>
+                  {!product.dotted_pages_in_stock && (
                     <span className="out-of-stock-label">Out of Stock</span>
                   )}
                 </button>
@@ -193,7 +197,7 @@ const ProductDescription = () => {
               </div>
               {selectedVariant && (
                 <p className="selection-hint">
-                  ✓ {selectedVariant === "plain" ? "Plain" : "Lined"} pages
+                  ✓ {selectedVariant === "dotted" ? "Dotted" : "Lined"} pages
                   selected
                 </p>
               )}
@@ -204,7 +208,11 @@ const ProductDescription = () => {
             <button
               className="add-to-cart-large"
               onClick={handleAddToCart}
-              disabled={product.category === "Notebook" && !selectedVariant}
+              disabled={
+                String(product.category || "")
+                  .toLowerCase()
+                  .includes("notebook") && !selectedVariant
+              }
             >
               Add to Cart
             </button>

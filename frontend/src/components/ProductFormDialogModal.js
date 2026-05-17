@@ -109,25 +109,27 @@ const ProductFormDialogModal = ({
                 </label>
               </div>
 
-              {productFormData.category === "Notebook" && (
+              {String(productFormData.category || "")
+                .toLowerCase()
+                .includes("notebook") && (
                 <div className="form-row">
                   <div className="form-group">
                     <label>
                       <input
                         type="checkbox"
-                        name="plain_pages_in_stock"
-                        checked={productFormData.plain_pages_in_stock}
+                        name="dotted_pages_in_stock"
+                        checked={productFormData.dotted_pages_in_stock}
                         onChange={(e) =>
                           onInputChange({
                             target: {
-                              name: "plain_pages_in_stock",
+                              name: "dotted_pages_in_stock",
                               type: "checkbox",
                               checked: e.target.checked,
                             },
                           })
                         }
                       />
-                      PLAIN PAGES IN STOCK
+                      DOTTED PAGES IN STOCK
                     </label>
                   </div>
 

@@ -49,6 +49,16 @@ export const ensureDatabaseSchema = async () => {
     ADD COLUMN IF NOT EXISTS lined_pages_in_stock BOOLEAN DEFAULT true;
   `);
 
+  await pool.query(`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS dotted_pages_in_stock BOOLEAN DEFAULT true;
+  `);
+
+  await pool.query(`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
+  `);
+
   // Add sale_price column for discounted products
   await pool.query(`
     ALTER TABLE products
