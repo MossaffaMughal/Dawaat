@@ -29,24 +29,16 @@ const ProductDescription = () => {
     product?.sale_price !== "";
   const currentPrice =
     product?.current_price ?? product?.sale_price ?? product?.price;
-  const dottedPagesInStock = product?.dotted_pages_in_stock ?? true;
-  const linedPagesInStock = product?.lined_pages_in_stock ?? true;
   const pageTypeConfig = getPageTypeConfig(product?.category);
+  const defaultVariant = getAvailablePageTypeVariant(product?.category, product);
 
   useEffect(() => {
     if (pageTypeConfig) {
-      setSelectedVariant(
-        getAvailablePageTypeVariant(product?.category, product),
-      );
+      setSelectedVariant(defaultVariant);
     } else {
       setSelectedVariant(null);
     }
-  }, [
-    product?.category,
-    product?.plain_pages_in_stock,
-    product?.dotted_pages_in_stock,
-    product?.lined_pages_in_stock,
-  ]);
+  }, [defaultVariant, pageTypeConfig]);
 
   const fetchReviewStats = useCallback(async () => {
     try {

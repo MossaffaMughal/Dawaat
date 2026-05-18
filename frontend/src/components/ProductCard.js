@@ -13,8 +13,6 @@ const ProductCard = ({ product, onAddToCart }) => {
   const [showVariantModal, setShowVariantModal] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState("dotted");
   const { isInWishlist, toggleWishlist } = useWishlist();
-  const dottedPagesInStock = product.dotted_pages_in_stock ?? true;
-  const linedPagesInStock = product.lined_pages_in_stock ?? true;
   const hasSalePrice =
     product.sale_price !== undefined &&
     product.sale_price !== null &&
@@ -31,9 +29,7 @@ const ProductCard = ({ product, onAddToCart }) => {
 
   const handleAddToCart = () => {
     if (pageTypeConfig) {
-      setSelectedVariant(
-        getAvailablePageTypeVariant(product.category, product),
-      );
+      setSelectedVariant(getAvailablePageTypeVariant(product.category, product));
       setShowVariantModal(true);
     } else if (onAddToCart) {
       onAddToCart(product, 1, null);
