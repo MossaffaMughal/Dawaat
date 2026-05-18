@@ -7,6 +7,7 @@ import PromoBannerPanel from "./PromoBannerPanel";
 import ConfirmDialog from "../components/ConfirmDialog";
 import OrderDetailsDialog from "../components/OrderDetailsDialog";
 import { compressImageFile } from "../utils/compressImage";
+import { getPageTypeConfig } from "../utils/pageType";
 import "../styles/AdminDashboard.css";
 
 const AdminDashboard = () => {
@@ -31,6 +32,7 @@ const AdminDashboard = () => {
     sale_price: "",
     category: "Notebook",
     in_stock: true,
+    plain_pages_in_stock: true,
     dotted_pages_in_stock: true,
     lined_pages_in_stock: true,
   });
@@ -378,6 +380,8 @@ const AdminDashboard = () => {
     return category;
   };
 
+  const pageTypeConfigForCategory = (category) => getPageTypeConfig(category);
+
   const handleMoveProduct = async (productId, direction) => {
     try {
       await apiClient.patch(`/products/${productId}/move`, { direction });
@@ -525,6 +529,7 @@ const AdminDashboard = () => {
           : "",
       category: product.category,
       in_stock: product.in_stock ?? true,
+      plain_pages_in_stock: product.plain_pages_in_stock ?? true,
       dotted_pages_in_stock: product.dotted_pages_in_stock ?? true,
       lined_pages_in_stock: product.lined_pages_in_stock ?? true,
     });
@@ -606,6 +611,7 @@ const AdminDashboard = () => {
       sale_price: "",
       category: "Notebook",
       in_stock: true,
+      plain_pages_in_stock: true,
       dotted_pages_in_stock: true,
       lined_pages_in_stock: true,
     });
@@ -906,43 +912,28 @@ const AdminDashboard = () => {
                   </label>
                 </div>
 
-                {String(productFormData.category || "")
-                  .toLowerCase()
-                  .includes("notebook") && (
+                {pageTypeConfigForCategory(productFormData.category) && (
                   <div className="form-row">
-                    <div className="form-group">
-                      <label>
-                        <input
-                          type="checkbox"
-                          name="dotted_pages_in_stock"
-                          checked={productFormData.dotted_pages_in_stock}
-                          onChange={(e) =>
-                            setProductFormData((prev) => ({
-                              ...prev,
-                              dotted_pages_in_stock: e.target.checked,
-                            }))
-                          }
-                        />
-                        Dotted Pages In Stock
-                      </label>
-                    </div>
-
-                    <div className="form-group">
-                      <label>
-                        <input
-                          type="checkbox"
-                          name="lined_pages_in_stock"
-                          checked={productFormData.lined_pages_in_stock}
-                          onChange={(e) =>
-                            setProductFormData((prev) => ({
-                              ...prev,
-                              lined_pages_in_stock: e.target.checked,
-                            }))
-                          }
-                        />
-                        Lined Pages In Stock
-                      </label>
-                    </div>
+                    {pageTypeConfigForCategory(
+                      productFormData.category,
+                    ).options.map((option) => (
+                      <div className="form-group" key={option.variant}>
+                        <label>
+                          <input
+                            type="checkbox"
+                            name={option.stockField}
+                            checked={productFormData[option.stockField]}
+                            onChange={(e) =>
+                              setProductFormData((prev) => ({
+                                ...prev,
+                                [option.stockField]: e.target.checked,
+                              }))
+                            }
+                          />
+                          {option.label} In Stock
+                        </label>
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -1131,16 +1122,15 @@ const AdminDashboard = () => {
                               </div>
                               <div className="product-row-meta">
                                 <span>Rs. {product.price}</span>
-                                <span>
-                                  {product.dotted_pages_in_stock
-                                    ? "Dotted ✓"
-                                    : "Dotted ✕"}
-                                </span>
-                                <span>
-                                  {product.lined_pages_in_stock
-                                    ? "Lined ✓"
-                                    : "Lined ✕"}
-                                </span>
+                                {pageTypeConfigForCategory(
+                                  product.category,
+                                )?.options.map((option) => (
+                                  <span key={option.variant}>
+                                    {product[option.stockField]
+                                      ? `${option.shortLabel} ✓`
+                                      : `${option.shortLabel} ✕`}
+                                  </span>
+                                ))}
                                 <button
                                   type="button"
                                   className={`stock-toggle-btn ${

@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useWishlist } from "../context/WishlistContext";
 import ReviewStats from "./ReviewStats";
+import {
+  getAvailablePageTypeVariant,
+  getPageTypeConfig,
+} from "../utils/pageType";
 import "../styles/ProductCard.css";
 
 const ProductCard = ({ product, onAddToCart }) => {
@@ -17,6 +21,7 @@ const ProductCard = ({ product, onAddToCart }) => {
     product.sale_price !== "";
   const currentPrice =
     product.current_price ?? product.sale_price ?? product.price;
+  const pageTypeConfig = getPageTypeConfig(product.category);
 
   useEffect(() => {
     if (product.images && product.images.length > 0) {
@@ -24,12 +29,11 @@ const ProductCard = ({ product, onAddToCart }) => {
     }
   }, [product]);
 
-  const isJournal = String(product.category || "")
-    .toLowerCase()
-    .includes("notebook");
-
   const handleAddToCart = () => {
-    if (isJournal) {
+    if (pageTypeConfig) {
+      setSelectedVariant(
+        getAvailablePageTypeVariant(product.category, product),
+      );
       setShowVariantModal(true);
     } else if (onAddToCart) {
       onAddToCart(product, 1, null);
@@ -101,71 +105,59 @@ const ProductCard = ({ product, onAddToCart }) => {
         <span>{product.in_stock ? "Add to Cart" : "Out of Stock"}</span>
       </button>
 
-      {showVariantModal && isJournal && (
+      {showVariantModal && pageTypeConfig && (
         <div
           className="modal-overlay"
           onClick={() => setShowVariantModal(false)}
         >
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3>Choose Page Type</h3>
-            <p>Select between dotted or lined pages</p>
+            <p>{pageTypeConfig.prompt}</p>
             <div className="variant-options">
-              <label
-                className={`variant-option ${!dottedPagesInStock ? "disabled" : ""}`}
-                title={
-                  !dottedPagesInStock ? "Dotted pages are out of stock" : ""
-                }
-              >
-                <input
-                  type="radio"
-                  name="pageType"
-                  value="dotted"
-                  checked={selectedVariant === "dotted"}
-                  onChange={(e) => {
-                    if (dottedPagesInStock) {
-                      setSelectedVariant(e.target.value);
-                    }
-                  }}
-                  disabled={!dottedPagesInStock}
-                />
-                <span>
-                  Dotted Pages{" "}
-                  {!dottedPagesInStock && (
-                    <span className="out-of-stock">(Out of Stock)</span>
-                  )}
-                </span>
-              </label>
-              <label
-                className={`variant-option ${!linedPagesInStock ? "disabled" : ""}`}
-                title={!linedPagesInStock ? "Lined pages are out of stock" : ""}
-              >
-                <input
-                  type="radio"
-                  name="pageType"
-                  value="lined"
-                  checked={selectedVariant === "lined"}
-                  onChange={(e) => {
-                    if (linedPagesInStock) {
-                      setSelectedVariant(e.target.value);
-                    }
-                  }}
-                  disabled={!linedPagesInStock}
-                />
-                <span>
-                  Lined Pages{" "}
-                  {!linedPagesInStock && (
-                    <span className="out-of-stock">(Out of Stock)</span>
-                  )}
-                </span>
-              </label>
+              {pageTypeConfig.options.map((option) => {
+                const isInStock = product?.[option.stockField] ?? true;
+
+                return (
+                  <label
+                    key={option.variant}
+                    className={`variant-option ${!isInStock ? "disabled" : ""}`}
+                    title={isInStock ? "" : option.outOfStockMessage}
+                  >
+                    <input
+                      type="radio"
+                      name="pageType"
+                      value={option.variant}
+                      checked={selectedVariant === option.variant}
+                      onChange={(e) => {
+                        if (isInStock) {
+                          setSelectedVariant(e.target.value);
+                        }
+                      }}
+                      disabled={!isInStock}
+                    />
+                    <span>
+                      {option.label}{" "}
+                      {!isInStock && (
+                        <span className="out-of-stock">(Out of Stock)</span>
+                      )}
+                    </span>
+                  </label>
+                );
+              })}
             </div>
             <div className="modal-buttons">
               <button
                 className="btn-confirm"
                 onClick={handleVariantSelect}
                 disabled={
-                  (selectedVariant === "dotted" && !dottedPagesInStock) ||
-                  (selectedVariant === "lined" && !linedPagesInStock)
+                  !pageTypeConfig.options.some(
+                    (option) => option.variant === selectedVariant,
+                  ) ||
+                  pageTypeConfig.options.some(
+                    (option) =>
+                      option.variant === selectedVariant &&
+                      !(product?.[option.stockField] ?? true),
+                  )
                 }
               >
                 Add to Cart

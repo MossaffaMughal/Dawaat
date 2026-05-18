@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import { getPageTypeConfig } from "../utils/pageType";
 import "../styles/ProductFormModal.css";
 
 const ProductFormModal = ({
@@ -11,6 +12,7 @@ const ProductFormModal = ({
   onClose,
 }) => {
   if (!isOpen) return null;
+  const pageTypeConfig = getPageTypeConfig(formData.category);
 
   return ReactDOM.createPortal(
     <>
@@ -105,33 +107,21 @@ const ProductFormModal = ({
                 </div>
               </div>
 
-              {String(formData.category || "")
-                .toLowerCase()
-                .includes("notebook") && (
+              {pageTypeConfig && (
                 <div className="form-row">
-                  <div className="form-group">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="dotted_pages_in_stock"
-                        checked={formData.dotted_pages_in_stock}
-                        onChange={onInputChange}
-                      />
-                      Dotted Pages In Stock
-                    </label>
-                  </div>
-
-                  <div className="form-group">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="lined_pages_in_stock"
-                        checked={formData.lined_pages_in_stock}
-                        onChange={onInputChange}
-                      />
-                      Lined Pages In Stock
-                    </label>
-                  </div>
+                  {pageTypeConfig.options.map((option) => (
+                    <div className="form-group" key={option.variant}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          name={option.stockField}
+                          checked={formData[option.stockField]}
+                          onChange={onInputChange}
+                        />
+                        {option.label} In Stock
+                      </label>
+                    </div>
+                  ))}
                 </div>
               )}
 

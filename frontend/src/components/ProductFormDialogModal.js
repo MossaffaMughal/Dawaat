@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import { getPageTypeConfig } from "../utils/pageType";
 import "../styles/ProductFormDialogModal.css";
 
 const ProductFormDialogModal = ({
@@ -18,6 +19,7 @@ const ProductFormDialogModal = ({
   children, // For any additional content like image upload section
 }) => {
   if (!isOpen) return null;
+  const pageTypeConfig = getPageTypeConfig(productFormData.category);
 
   return ReactDOM.createPortal(
     <>
@@ -109,49 +111,29 @@ const ProductFormDialogModal = ({
                 </label>
               </div>
 
-              {String(productFormData.category || "")
-                .toLowerCase()
-                .includes("notebook") && (
+              {pageTypeConfig && (
                 <div className="form-row">
-                  <div className="form-group">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="dotted_pages_in_stock"
-                        checked={productFormData.dotted_pages_in_stock}
-                        onChange={(e) =>
-                          onInputChange({
-                            target: {
-                              name: "dotted_pages_in_stock",
-                              type: "checkbox",
-                              checked: e.target.checked,
-                            },
-                          })
-                        }
-                      />
-                      DOTTED PAGES IN STOCK
-                    </label>
-                  </div>
-
-                  <div className="form-group">
-                    <label>
-                      <input
-                        type="checkbox"
-                        name="lined_pages_in_stock"
-                        checked={productFormData.lined_pages_in_stock}
-                        onChange={(e) =>
-                          onInputChange({
-                            target: {
-                              name: "lined_pages_in_stock",
-                              type: "checkbox",
-                              checked: e.target.checked,
-                            },
-                          })
-                        }
-                      />
-                      LINED PAGES IN STOCK
-                    </label>
-                  </div>
+                  {pageTypeConfig.options.map((option) => (
+                    <div className="form-group" key={option.variant}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          name={option.stockField}
+                          checked={productFormData[option.stockField]}
+                          onChange={(e) =>
+                            onInputChange({
+                              target: {
+                                name: option.stockField,
+                                type: "checkbox",
+                                checked: e.target.checked,
+                              },
+                            })
+                          }
+                        />
+                        {option.label.toUpperCase()} IN STOCK
+                      </label>
+                    </div>
+                  ))}
                 </div>
               )}
 

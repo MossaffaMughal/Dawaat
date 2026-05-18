@@ -17,6 +17,7 @@ const AdminProducts = () => {
     sale_price: "",
     category: "Notebook",
     stock_quantity: "",
+    plain_pages_in_stock: true,
     dotted_pages_in_stock: true,
     lined_pages_in_stock: true,
   });
@@ -73,6 +74,7 @@ const AdminProducts = () => {
       sale_price: product.sale_price ?? "",
       category: product.category,
       stock_quantity: product.stock_quantity,
+      plain_pages_in_stock: product.plain_pages_in_stock ?? true,
       dotted_pages_in_stock: product.dotted_pages_in_stock ?? true,
       lined_pages_in_stock: product.lined_pages_in_stock ?? true,
     });
@@ -154,6 +156,7 @@ const AdminProducts = () => {
       sale_price: "",
       category: "Notebook",
       stock_quantity: "",
+      plain_pages_in_stock: true,
       dotted_pages_in_stock: true,
       lined_pages_in_stock: true,
     });

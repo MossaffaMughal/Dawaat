@@ -5,6 +5,10 @@ import { useParams } from "react-router-dom";
 import "../styles/ProductDescription.css";
 import ReviewForm from "../components/ReviewForm";
 import ReviewsList from "../components/ReviewsList";
+import {
+  getAvailablePageTypeVariant,
+  getPageTypeConfig,
+} from "../utils/pageType";
 
 const ProductDescription = () => {
   const { id } = useParams();
@@ -27,6 +31,22 @@ const ProductDescription = () => {
     product?.current_price ?? product?.sale_price ?? product?.price;
   const dottedPagesInStock = product?.dotted_pages_in_stock ?? true;
   const linedPagesInStock = product?.lined_pages_in_stock ?? true;
+  const pageTypeConfig = getPageTypeConfig(product?.category);
+
+  useEffect(() => {
+    if (pageTypeConfig) {
+      setSelectedVariant(
+        getAvailablePageTypeVariant(product?.category, product),
+      );
+    } else {
+      setSelectedVariant(null);
+    }
+  }, [
+    product?.category,
+    product?.plain_pages_in_stock,
+    product?.dotted_pages_in_stock,
+    product?.lined_pages_in_stock,
+  ]);
 
   const fetchReviewStats = useCallback(async () => {
     try {
@@ -53,17 +73,13 @@ const ProductDescription = () => {
 
   const handleAddToCart = () => {
     if (product) {
-      const isJournal = String(product.category || "")
-        .toLowerCase()
-        .includes("notebook");
-
-      if (isJournal && !selectedVariant) {
+      if (pageTypeConfig && !selectedVariant) {
         setNotification("Please select a page type");
         setTimeout(() => setNotification(null), 3000);
         return;
       }
 
-      addToCart(product, quantity, isJournal ? selectedVariant : null);
+      addToCart(product, quantity, pageTypeConfig ? selectedVariant : null);
       setNotification("✓ Added to cart");
       setTimeout(() => setNotification(null), 3000);
     }
@@ -150,53 +166,47 @@ const ProductDescription = () => {
             </div>
           </div>
 
-          {String(product.category || "")
-            .toLowerCase()
-            .includes("notebook") && (
+          {pageTypeConfig && (
             <div className="page-type-selector">
               <label className="selector-label">Choose Page Type:</label>
               <div className="page-options">
-                <button
-                  className={`page-option ${selectedVariant === "dotted" ? "selected" : ""} ${!dottedPagesInStock ? "disabled" : ""}`}
-                  onClick={() => {
-                    if (dottedPagesInStock) {
-                      setSelectedVariant("dotted");
-                    }
-                  }}
-                  disabled={!dottedPagesInStock}
-                  title={
-                    !dottedPagesInStock ? "Dotted pages are out of stock" : ""
-                  }
-                >
-                  <span className="option-icon">•</span>
-                  <span className="option-text">Dotted Pages</span>
-                  {!dottedPagesInStock && (
-                    <span className="out-of-stock-label">Out of Stock</span>
-                  )}
-                </button>
-                <button
-                  className={`page-option ${selectedVariant === "lined" ? "selected" : ""} ${!linedPagesInStock ? "disabled" : ""}`}
-                  onClick={() => {
-                    if (linedPagesInStock) {
-                      setSelectedVariant("lined");
-                    }
-                  }}
-                  disabled={!linedPagesInStock}
-                  title={
-                    !linedPagesInStock ? "Lined pages are out of stock" : ""
-                  }
-                >
-                  <span className="option-icon">≡</span>
-                  <span className="option-text">Lined Pages</span>
-                  {!linedPagesInStock && (
-                    <span className="out-of-stock-label">Out of Stock</span>
-                  )}
-                </button>
+                {pageTypeConfig.options.map((option) => {
+                  const isInStock = product?.[option.stockField] ?? true;
+
+                  return (
+                    <button
+                      key={option.variant}
+                      className={`page-option ${selectedVariant === option.variant ? "selected" : ""} ${!isInStock ? "disabled" : ""}`}
+                      onClick={() => {
+                        if (isInStock) {
+                          setSelectedVariant(option.variant);
+                        }
+                      }}
+                      disabled={!isInStock}
+                      title={isInStock ? "" : option.outOfStockMessage}
+                    >
+                      <span className="option-icon">
+                        {option.variant === "plain"
+                          ? "—"
+                          : option.variant === "dotted"
+                            ? "•"
+                            : "≡"}
+                      </span>
+                      <span className="option-text">{option.label}</span>
+                      {!isInStock && (
+                        <span className="out-of-stock-label">Out of Stock</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
               {selectedVariant && (
                 <p className="selection-hint">
-                  ✓ {selectedVariant === "dotted" ? "Dotted" : "Lined"} pages
-                  selected
+                  ✓{" "}
+                  {pageTypeConfig.options.find(
+                    (option) => option.variant === selectedVariant,
+                  )?.shortLabel || selectedVariant}{" "}
+                  pages selected
                 </p>
               )}
             </div>
@@ -206,11 +216,7 @@ const ProductDescription = () => {
             <button
               className="add-to-cart-large"
               onClick={handleAddToCart}
-              disabled={
-                String(product.category || "")
-                  .toLowerCase()
-                  .includes("notebook") && !selectedVariant
-              }
+              disabled={Boolean(pageTypeConfig) && !selectedVariant}
             >
               Add to Cart
             </button>
