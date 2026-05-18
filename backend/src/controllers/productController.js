@@ -319,41 +319,76 @@ export const moveProduct = async (req, res) => {
       return res.status(400).json({ message: "Invalid direction" });
     }
 
-    const curRes = await pool.query(
-      "SELECT id, category, sort_order FROM products WHERE id = $1",
-      [id],
-    );
-    if (curRes.rows.length === 0) {
-      return res.status(404).json({ message: "Product not found" });
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      const productRes = await client.query(
+        "SELECT id, category FROM products WHERE id = $1 FOR UPDATE",
+        [id],
+      );
+
+      if (productRes.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      const product = productRes.rows[0];
+
+      const categoryRes = await client.query(
+        `SELECT id
+         FROM products
+         WHERE category = $1
+         ORDER BY COALESCE(sort_order, 0) ASC, id ASC
+         FOR UPDATE`,
+        [product.category],
+      );
+
+      const orderedProducts = categoryRes.rows;
+      const currentIndex = orderedProducts.findIndex(
+        (row) => row.id === product.id,
+      );
+
+      if (currentIndex === -1) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      const targetIndex =
+        direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+      if (targetIndex < 0 || targetIndex >= orderedProducts.length) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ message: "Cannot move further" });
+      }
+
+      const movedProductId = orderedProducts[currentIndex].id;
+      const neighborProductId = orderedProducts[targetIndex].id;
+      [orderedProducts[currentIndex], orderedProducts[targetIndex]] = [
+        orderedProducts[targetIndex],
+        orderedProducts[currentIndex],
+      ];
+
+      console.log(
+        `🔄 MOVE PRODUCT: Product ID ${movedProductId} ${direction} with neighbor ID ${neighborProductId} in category ${product.category}`,
+      );
+
+      for (let index = 0; index < orderedProducts.length; index += 1) {
+        await client.query(
+          `UPDATE products SET sort_order = $1 WHERE id = $2`,
+          [index, orderedProducts[index].id],
+        );
+      }
+
+      await client.query("COMMIT");
+      console.log(`✨ Transaction committed successfully`);
+    } catch (err) {
+      console.error(`❌ Transaction error: ${err.message}`);
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
     }
-
-    const product = curRes.rows[0];
-    let neighborQuery;
-    if (direction === "up") {
-      neighborQuery = `SELECT id, sort_order FROM products WHERE category = $1 AND sort_order < $2 ORDER BY sort_order DESC LIMIT 1`;
-    } else {
-      neighborQuery = `SELECT id, sort_order FROM products WHERE category = $1 AND sort_order > $2 ORDER BY sort_order ASC LIMIT 1`;
-    }
-
-    const neighborRes = await pool.query(neighborQuery, [
-      product.category,
-      product.sort_order,
-    ]);
-    if (neighborRes.rows.length === 0) {
-      return res.status(400).json({ message: "Cannot move further" });
-    }
-
-    const neighbor = neighborRes.rows[0];
-
-    // Swap sort_order values
-    await pool.query("UPDATE products SET sort_order = $1 WHERE id = $2", [
-      neighbor.sort_order,
-      product.id,
-    ]);
-    await pool.query("UPDATE products SET sort_order = $1 WHERE id = $2", [
-      product.sort_order,
-      neighbor.id,
-    ]);
 
     res.json({ message: "Product moved" });
   } catch (error) {

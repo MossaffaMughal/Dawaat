@@ -838,6 +838,53 @@ body.admin-form-open::before {
     margin-bottom: 20px;
   }
 
+  .products-category-board {
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .products-category-section {
+    padding: 16px;
+  }
+
+  .products-category-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .products-category-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .product-move-buttons {
+    width: 100%;
+  }
+
+  .product-move-btn {
+    flex: 1;
+  }
+
+  .product-row-title {
+    flex-wrap: wrap;
+  }
+
+  .product-row-meta {
+    gap: 8px;
+  }
+
+  .product-row-actions {
+    width: 100%;
+  }
+
+  .product-row-actions .edit-btn,
+  .product-row-actions .delete-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
   .admin-section h2 {
     font-size: 18px;
     margin-bottom: 15px;
@@ -896,26 +943,12 @@ body.admin-form-open::before {
   .edit-btn,
   .delete-btn,
   .view-btn {
-    width: 70px;
     margin-bottom: 6px;
-
-    .products-category-row {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .product-row-actions {
-      width: 100%;
-    }
-
-    .product-row-meta {
-      width: 100%;
-    }
     margin-right: 6px;
     justify-content: center;
     padding: 6px 8px;
     font-size: 11px;
-    flex: 0 0 70px;
+    flex: 1 1 0;
   }
 
   .edit-btn:last-child,
@@ -963,6 +996,15 @@ body.admin-form-open::before {
     margin-bottom: 10px;
     font-size: 14px;
   }
+
+  .product-row-main {
+    width: 100%;
+  }
+
+  .product-row-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 480px) {
@@ -991,6 +1033,35 @@ body.admin-form-open::before {
     padding: 12px 8px;
     text-align: center;
     font-size: 12px;
+  }
+
+  .products-category-section {
+    padding: 14px;
+  }
+
+  .products-category-header h3 {
+    font-size: 16px;
+  }
+
+  .products-category-row {
+    padding: 10px;
+  }
+
+  .product-row-title strong {
+    font-size: 14px;
+  }
+
+  .product-row-meta {
+    font-size: 12px;
+  }
+
+  .product-row-actions {
+    flex-direction: column;
+  }
+
+  .product-row-actions .edit-btn,
+  .product-row-actions .delete-btn {
+    width: 100%;
   }
 
   .admin-table {

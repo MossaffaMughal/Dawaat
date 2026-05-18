@@ -25,6 +25,8 @@ const ProductDescription = () => {
     product?.sale_price !== "";
   const currentPrice =
     product?.current_price ?? product?.sale_price ?? product?.price;
+  const dottedPagesInStock = product?.dotted_pages_in_stock ?? true;
+  const linedPagesInStock = product?.lined_pages_in_stock ?? true;
 
   const fetchReviewStats = useCallback(async () => {
     try {
@@ -155,42 +157,38 @@ const ProductDescription = () => {
               <label className="selector-label">Choose Page Type:</label>
               <div className="page-options">
                 <button
-                  className={`page-option ${selectedVariant === "dotted" ? "selected" : ""} ${!product.dotted_pages_in_stock ? "disabled" : ""}`}
+                  className={`page-option ${selectedVariant === "dotted" ? "selected" : ""} ${!dottedPagesInStock ? "disabled" : ""}`}
                   onClick={() => {
-                    if (product.dotted_pages_in_stock) {
+                    if (dottedPagesInStock) {
                       setSelectedVariant("dotted");
                     }
                   }}
-                  disabled={!product.dotted_pages_in_stock}
+                  disabled={!dottedPagesInStock}
                   title={
-                    !product.dotted_pages_in_stock
-                      ? "Dotted pages are out of stock"
-                      : ""
+                    !dottedPagesInStock ? "Dotted pages are out of stock" : ""
                   }
                 >
                   <span className="option-icon">•</span>
                   <span className="option-text">Dotted Pages</span>
-                  {!product.dotted_pages_in_stock && (
+                  {!dottedPagesInStock && (
                     <span className="out-of-stock-label">Out of Stock</span>
                   )}
                 </button>
                 <button
-                  className={`page-option ${selectedVariant === "lined" ? "selected" : ""} ${!product.lined_pages_in_stock ? "disabled" : ""}`}
+                  className={`page-option ${selectedVariant === "lined" ? "selected" : ""} ${!linedPagesInStock ? "disabled" : ""}`}
                   onClick={() => {
-                    if (product.lined_pages_in_stock) {
+                    if (linedPagesInStock) {
                       setSelectedVariant("lined");
                     }
                   }}
-                  disabled={!product.lined_pages_in_stock}
+                  disabled={!linedPagesInStock}
                   title={
-                    !product.lined_pages_in_stock
-                      ? "Lined pages are out of stock"
-                      : ""
+                    !linedPagesInStock ? "Lined pages are out of stock" : ""
                   }
                 >
                   <span className="option-icon">≡</span>
                   <span className="option-text">Lined Pages</span>
-                  {!product.lined_pages_in_stock && (
+                  {!linedPagesInStock && (
                     <span className="out-of-stock-label">Out of Stock</span>
                   )}
                 </button>

@@ -244,6 +244,21 @@ const AdminDashboard = () => {
     }
   };
 
+  const refreshProducts = async () => {
+    const response = await apiClient.get("/products");
+    const sortedProducts = [...response.data].sort(
+      (a, b) =>
+        String(a.category || "").localeCompare(String(b.category || "")) ||
+        (a.sort_order ?? 0) - (b.sort_order ?? 0) ||
+        a.id - b.id,
+    );
+    setProducts(sortedProducts);
+    setStats((prev) => ({
+      ...prev,
+      totalProducts: response.data.length,
+    }));
+  };
+
   // Product handlers
   const handleProductInputChange = (e) => {
     const { name, value } = e.target;
@@ -339,7 +354,7 @@ const AdminDashboard = () => {
         "success",
       );
       resetProductForm();
-      fetchAdminData();
+      await refreshProducts();
     } catch (error) {
       console.error("Error saving product:", error);
       showNotification("Error saving product: " + error.message, "error");
@@ -366,7 +381,7 @@ const AdminDashboard = () => {
   const handleMoveProduct = async (productId, direction) => {
     try {
       await apiClient.patch(`/products/${productId}/move`, { direction });
-      fetchAdminData();
+      await refreshProducts();
     } catch (error) {
       console.error("Error moving product:", error);
       showNotification("Error moving product", "error");
@@ -540,7 +555,7 @@ const AdminDashboard = () => {
       action: async () => {
         try {
           await apiClient.delete(`/products/${productId}`);
-          fetchAdminData();
+          await refreshProducts();
           showNotification("Product deleted successfully", "success");
         } catch (error) {
           console.error("Error deleting product:", error);
@@ -568,7 +583,7 @@ const AdminDashboard = () => {
       });
 
       console.log("Stock update response:", response.data);
-      fetchAdminData();
+      await refreshProducts();
     } catch (error) {
       console.error("Error toggling stock status:", error);
       console.error("Response status:", error.response?.status);
@@ -622,7 +637,7 @@ const AdminDashboard = () => {
       action: async () => {
         try {
           await apiClient.delete(`/orders/${orderId}`);
-          fetchAdminData();
+          await fetchAdminData();
           setSelectedOrder(null);
           showNotification("Order deleted successfully", "success");
         } catch (error) {

@@ -144,7 +144,13 @@ const Cart = () => {
                       {item.name}
                       {item.variant && (
                         <span className="variant-info">
-                          ({item.variant === "lined" ? "Lined" : "Plain"} pages)
+                          (
+                          {item.variant === "lined"
+                            ? "Lined"
+                            : item.variant === "dotted"
+                              ? "Dotted"
+                              : "Plain"}{" "}
+                          pages)
                         </span>
                       )}
                     </td>
