@@ -30,7 +30,10 @@ const ProductDescription = () => {
   const currentPrice =
     product?.current_price ?? product?.sale_price ?? product?.price;
   const pageTypeConfig = getPageTypeConfig(product?.category);
-  const defaultVariant = getAvailablePageTypeVariant(product?.category, product);
+  const defaultVariant = getAvailablePageTypeVariant(
+    product?.category,
+    product,
+  );
 
   useEffect(() => {
     if (pageTypeConfig) {

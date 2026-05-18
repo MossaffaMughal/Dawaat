@@ -29,7 +29,9 @@ const ProductCard = ({ product, onAddToCart }) => {
 
   const handleAddToCart = () => {
     if (pageTypeConfig) {
-      setSelectedVariant(getAvailablePageTypeVariant(product.category, product));
+      setSelectedVariant(
+        getAvailablePageTypeVariant(product.category, product),
+      );
       setShowVariantModal(true);
     } else if (onAddToCart) {
       onAddToCart(product, 1, null);
