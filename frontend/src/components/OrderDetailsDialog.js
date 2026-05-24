@@ -30,8 +30,9 @@ const OrderDetailsDialog = ({
     onDelete(order.id);
   };
 
-  const totalAmount =
-    parseFloat(order.total_amount) + parseFloat(order.shipping_cost || 0);
+  const orderTotalAmount = parseFloat(order.total_amount) || 0;
+  const shippingAmount = parseFloat(order.shipping_cost || 0) || 0;
+  const subtotalAmount = Math.max(orderTotalAmount - shippingAmount, 0);
 
   const formatItemType = (item) => {
     const variant = String(item?.variant || "")
@@ -136,20 +137,18 @@ const OrderDetailsDialog = ({
             <div className="info-group summary-group">
               <div className="summary-row">
                 <span>Subtotal:</span>
-                <span>Rs. {parseFloat(order.total_amount).toFixed(2)}</span>
+                <span>Rs. {subtotalAmount.toFixed(2)}</span>
               </div>
               <div className="summary-row">
                 <span>Shipping:</span>
-                <span>
-                  Rs. {parseFloat(order.shipping_cost || 0).toFixed(2)}
-                </span>
+                <span>Rs. {shippingAmount.toFixed(2)}</span>
               </div>
               <div className="summary-row total">
                 <span>
                   <strong>Total:</strong>
                 </span>
                 <span>
-                  <strong>Rs. {totalAmount.toFixed(2)}</strong>
+                  <strong>Rs. {orderTotalAmount.toFixed(2)}</strong>
                 </span>
               </div>
             </div>
