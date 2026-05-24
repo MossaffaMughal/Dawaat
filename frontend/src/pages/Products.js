@@ -5,6 +5,7 @@ import { useSearchParams } from "react-router-dom";
 import "../styles/Products.css";
 import ProductCard from "../components/ProductCard";
 import HomeReviewsSection from "../components/HomeReviewsSection";
+import { normalizeCategory } from "../utils/pageType";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -16,7 +17,16 @@ const Products = () => {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sortBy, setSortBy] = useState("newest");
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const { addToCart } = useCart();
+
+  const matchesCategoryFilter = (productCategory, selectedCategory) => {
+    if (selectedCategory === "all") return true;
+
+    return (
+      normalizeCategory(productCategory) === normalizeCategory(selectedCategory)
+    );
+  };
 
   useEffect(() => {
     const categoryParam = searchParams.get("category");
@@ -42,8 +52,31 @@ const Products = () => {
     setSearch(searchParam || "");
     setMinPrice(minPriceParam || "");
     setMaxPrice(maxPriceParam || "");
-    setSortBy(sortByParam || "");
+    setSortBy(sortByParam || "newest");
   }, [searchParams]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+
+    const syncFilterPanelState = () => {
+      if (mediaQuery.matches) {
+        setIsMobileFiltersOpen(false);
+      } else {
+        setIsMobileFiltersOpen(true);
+      }
+    };
+
+    syncFilterPanelState();
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", syncFilterPanelState);
+      return () =>
+        mediaQuery.removeEventListener("change", syncFilterPanelState);
+    }
+
+    mediaQuery.addListener(syncFilterPanelState);
+    return () => mediaQuery.removeListener(syncFilterPanelState);
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -51,9 +84,6 @@ const Products = () => {
         setLoading(true);
         const params = new URLSearchParams();
 
-        if (filter !== "all") {
-          params.append("category", filter);
-        }
         if (search) {
           params.append("search", search);
         }
@@ -82,7 +112,12 @@ const Products = () => {
 
         const response = await apiClient.get(`/products?${queryString}`);
         console.log("Backend returned", response.data.length, "products");
-        setProducts(response.data);
+
+        const filteredProducts = response.data.filter((product) =>
+          matchesCategoryFilter(product.category, filter),
+        );
+
+        setProducts(filteredProducts);
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
@@ -124,132 +159,151 @@ const Products = () => {
             <h3>
               <i className="fas fa-filter"></i> Filters
             </h3>
-            {(search || minPrice || maxPrice || filter !== "all") && (
-              <button className="clear-filters" onClick={handleClearFilters}>
-                Clear All
+            <div className="filters-actions">
+              {(search || minPrice || maxPrice || filter !== "all") && (
+                <button className="clear-filters" onClick={handleClearFilters}>
+                  Clear All
+                </button>
+              )}
+              <button
+                className="filters-toggle-btn"
+                type="button"
+                onClick={() => setIsMobileFiltersOpen((prev) => !prev)}
+                aria-expanded={isMobileFiltersOpen}
+                aria-controls="products-filters-content"
+              >
+                {isMobileFiltersOpen ? "Hide Filters" : "Show Filters"}
+                <i
+                  className={`fas fa-chevron-${isMobileFiltersOpen ? "up" : "down"}`}
+                ></i>
               </button>
-            )}
-          </div>
-
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Search products..."
-              value={search}
-              onChange={handleSearchChange}
-              className="search-input"
-            />
-            <i className="fas fa-search"></i>
-          </div>
-
-          <div className="filter-section">
-            <h4>Categories</h4>
-            <div className="filter-options">
-              <label className={filter === "all" ? "active" : ""}>
-                <input
-                  type="radio"
-                  name="category"
-                  value="all"
-                  checked={filter === "all"}
-                  onChange={(e) => setFilter(e.target.value)}
-                />
-                <span>All Products</span>
-              </label>
-              <label className={filter === "Notebook" ? "active" : ""}>
-                <input
-                  type="radio"
-                  name="category"
-                  value="Notebook"
-                  checked={filter === "Notebook"}
-                  onChange={(e) => setFilter(e.target.value)}
-                />
-                <span>Journals</span>
-              </label>
-              <label className={filter === "Bookmark" ? "active" : ""}>
-                <input
-                  type="radio"
-                  name="category"
-                  value="Bookmark"
-                  checked={filter === "Bookmark"}
-                  onChange={(e) => setFilter(e.target.value)}
-                />
-                <span>Bookmarks</span>
-              </label>
-              <label className={filter === "Notebooks" ? "active" : ""}>
-                <input
-                  type="radio"
-                  name="category"
-                  value="Notebooks"
-                  checked={filter === "Notebooks"}
-                  onChange={(e) => setFilter(e.target.value)}
-                />
-                <span>Notebooks</span>
-              </label>
-              <label className={filter === "Cards" ? "active" : ""}>
-                <input
-                  type="radio"
-                  name="category"
-                  value="Cards"
-                  checked={filter === "Cards"}
-                  onChange={(e) => setFilter(e.target.value)}
-                />
-                <span>Cards</span>
-              </label>
-              <label className={filter === "Stickers" ? "active" : ""}>
-                <input
-                  type="radio"
-                  name="category"
-                  value="Stickers"
-                  checked={filter === "Stickers"}
-                  onChange={(e) => setFilter(e.target.value)}
-                />
-                <span>Stickers</span>
-              </label>
-              <label className={filter === "Bundles" ? "active" : ""}>
-                <input
-                  type="radio"
-                  name="category"
-                  value="Bundles"
-                  checked={filter === "Bundles"}
-                  onChange={(e) => setFilter(e.target.value)}
-                />
-                <span>Bundles</span>
-              </label>
             </div>
           </div>
 
-          <div className="filter-section">
-            <h4>Price Range</h4>
-            <div className="price-inputs">
+          <div
+            id="products-filters-content"
+            className={`filters-content ${isMobileFiltersOpen ? "open" : ""}`}
+          >
+            <div className="search-box">
               <input
-                type="number"
-                placeholder="Min price"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                className="price-input"
+                type="text"
+                placeholder="Search products..."
+                value={search}
+                onChange={handleSearchChange}
+                className="search-input"
               />
-              <span>-</span>
-              <input
-                type="number"
-                placeholder="Max price"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                className="price-input"
-              />
+              <i className="fas fa-search"></i>
             </div>
-          </div>
 
-          <div className="filter-section">
-            <h4>Sort By</h4>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="sort-select"
-            >
-              <option value="newest">Newest First</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-            </select>
+            <div className="filter-section">
+              <h4>Categories</h4>
+              <div className="filter-options">
+                <label className={filter === "all" ? "active" : ""}>
+                  <input
+                    type="radio"
+                    name="category"
+                    value="all"
+                    checked={filter === "all"}
+                    onChange={(e) => setFilter(e.target.value)}
+                  />
+                  <span>All Products</span>
+                </label>
+                <label className={filter === "Notebook" ? "active" : ""}>
+                  <input
+                    type="radio"
+                    name="category"
+                    value="Notebook"
+                    checked={filter === "Notebook"}
+                    onChange={(e) => setFilter(e.target.value)}
+                  />
+                  <span>Journals</span>
+                </label>
+                <label className={filter === "Bookmark" ? "active" : ""}>
+                  <input
+                    type="radio"
+                    name="category"
+                    value="Bookmark"
+                    checked={filter === "Bookmark"}
+                    onChange={(e) => setFilter(e.target.value)}
+                  />
+                  <span>Bookmarks</span>
+                </label>
+                <label className={filter === "Notebooks" ? "active" : ""}>
+                  <input
+                    type="radio"
+                    name="category"
+                    value="Notebooks"
+                    checked={filter === "Notebooks"}
+                    onChange={(e) => setFilter(e.target.value)}
+                  />
+                  <span>Notebooks</span>
+                </label>
+                <label className={filter === "Cards" ? "active" : ""}>
+                  <input
+                    type="radio"
+                    name="category"
+                    value="Cards"
+                    checked={filter === "Cards"}
+                    onChange={(e) => setFilter(e.target.value)}
+                  />
+                  <span>Cards</span>
+                </label>
+                <label className={filter === "Stickers" ? "active" : ""}>
+                  <input
+                    type="radio"
+                    name="category"
+                    value="Stickers"
+                    checked={filter === "Stickers"}
+                    onChange={(e) => setFilter(e.target.value)}
+                  />
+                  <span>Stickers</span>
+                </label>
+                <label className={filter === "Bundles" ? "active" : ""}>
+                  <input
+                    type="radio"
+                    name="category"
+                    value="Bundles"
+                    checked={filter === "Bundles"}
+                    onChange={(e) => setFilter(e.target.value)}
+                  />
+                  <span>Bundles</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="filter-section">
+              <h4>Price Range</h4>
+              <div className="price-inputs">
+                <input
+                  type="number"
+                  placeholder="Min price"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  className="price-input"
+                />
+                <span>-</span>
+                <input
+                  type="number"
+                  placeholder="Max price"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  className="price-input"
+                />
+              </div>
+            </div>
+
+            <div className="filter-section">
+              <h4>Sort By</h4>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="sort-select"
+              >
+                <option value="newest">Newest First</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+              </select>
+            </div>
           </div>
         </aside>
 

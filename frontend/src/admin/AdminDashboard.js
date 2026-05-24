@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import apiClient from "../utils/apiClient";
 import { useAuth } from "../context/AuthContext";
 import AdminReviews from "./AdminReviews";
@@ -66,11 +66,33 @@ const AdminDashboard = () => {
   const [heroBannerUrlInput, setHeroBannerUrlInput] = useState("");
   const [savingHeroBanner, setSavingHeroBanner] = useState(false);
   const [uploadingHeroBanner, setUploadingHeroBanner] = useState(false);
+  const draggedProductRef = useRef(null);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [draggingProductId, setDraggingProductId] = useState(null);
 
   useEffect(() => {
     fetchAdminData();
     fetchShippingCost();
     fetchHeroBannerUrl();
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(pointer: coarse)");
+
+    const updateTouchDeviceState = () => {
+      setIsTouchDevice(mediaQuery.matches);
+    };
+
+    updateTouchDeviceState();
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", updateTouchDeviceState);
+      return () =>
+        mediaQuery.removeEventListener("change", updateTouchDeviceState);
+    }
+
+    mediaQuery.addListener(updateTouchDeviceState);
+    return () => mediaQuery.removeListener(updateTouchDeviceState);
   }, []);
 
   // Toggle backdrop class when form opens/closes
@@ -380,16 +402,207 @@ const AdminDashboard = () => {
     return category;
   };
 
-  const pageTypeConfigForCategory = (category) => getPageTypeConfig(category);
+  const pageTypeConfigForCategory = (category) =>
+    getPageTypeConfig(category) || {};
 
-  const handleMoveProduct = async (productId, direction) => {
-    try {
-      await apiClient.patch(`/products/${productId}/move`, { direction });
-      await refreshProducts();
-    } catch (error) {
-      console.error("Error moving product:", error);
-      showNotification("Error moving product", "error");
+  const buildReorderedCategoryProducts = (
+    categoryProducts,
+    draggedProductId,
+    targetIndex,
+  ) => {
+    const currentIndex = categoryProducts.findIndex(
+      (product) => product.id === draggedProductId,
+    );
+
+    if (currentIndex === -1) return categoryProducts;
+
+    let insertIndex = targetIndex;
+    if (currentIndex < targetIndex) {
+      insertIndex -= 1;
     }
+
+    if (insertIndex === currentIndex) return categoryProducts;
+
+    const nextProducts = [...categoryProducts];
+    const [movedProduct] = nextProducts.splice(currentIndex, 1);
+    nextProducts.splice(insertIndex, 0, movedProduct);
+    return nextProducts;
+  };
+
+  const previewCategoryReorder = (category, draggedProductId, targetIndex) => {
+    setProducts((prevProducts) => {
+      const categoryProducts = prevProducts.filter(
+        (product) => (product.category || "Uncategorized") === category,
+      );
+      const reorderedCategoryProducts = buildReorderedCategoryProducts(
+        categoryProducts,
+        draggedProductId,
+        targetIndex,
+      );
+
+      if (reorderedCategoryProducts === categoryProducts) {
+        return prevProducts;
+      }
+
+      const otherProducts = prevProducts.filter(
+        (product) => (product.category || "Uncategorized") !== category,
+      );
+
+      return [...otherProducts, ...reorderedCategoryProducts];
+    });
+  };
+
+  const handleDragStart = (e, category, index, productId) => {
+    if (isTouchDevice) return;
+    draggedProductRef.current = { category, index, productId };
+    setDraggingProductId(productId);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", `${category}:${index}`);
+  };
+
+  const handleDragOver = (e, category, targetIndex) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+
+    const dragged = draggedProductRef.current;
+    if (!dragged || dragged.category !== category) return;
+
+    previewCategoryReorder(category, dragged.productId, targetIndex);
+  };
+
+  const persistProductOrder = async (category, orderedProducts) => {
+    try {
+      await apiClient.patch("/products/reorder", {
+        category,
+        orderedIds: orderedProducts.map((product) => product.id),
+      });
+    } catch (error) {
+      console.error("Error reordering products:", error);
+      showNotification("Error saving product order", "error");
+      await fetchAdminData();
+    }
+  };
+
+  const reorderCategoryProducts = async (
+    category,
+    draggedProductId,
+    targetIndex,
+  ) => {
+    const categoryProducts = [...(productsByCategory[category] || [])];
+    const reorderedCategoryProducts = buildReorderedCategoryProducts(
+      categoryProducts,
+      draggedProductId,
+      targetIndex,
+    );
+
+    if (reorderedCategoryProducts === categoryProducts) {
+      draggedProductRef.current = null;
+      setDraggingProductId(null);
+      return;
+    }
+
+    draggedProductRef.current = null;
+    setDraggingProductId(null);
+    await persistProductOrder(category, reorderedCategoryProducts);
+    await fetchAdminData();
+  };
+
+  const handleDrop = async (e, category, targetIndex) => {
+    e.preventDefault();
+    const dragged = draggedProductRef.current;
+
+    if (!dragged || dragged.category !== category) return;
+
+    await reorderCategoryProducts(category, dragged.productId, targetIndex);
+  };
+
+  const handleTouchStart = (e, category, index, productId) => {
+    if (!isTouchDevice || e.touches.length !== 1) return;
+
+    draggedProductRef.current = { category, index, productId };
+    setDraggingProductId(productId);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isTouchDevice) return;
+
+    const dragged = draggedProductRef.current;
+    const touch = e.touches?.[0];
+
+    if (!dragged || !touch) return;
+
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const rowElement = element?.closest?.(".products-category-row");
+
+    if (!rowElement) return;
+
+    const targetCategory = rowElement.dataset.category;
+    const targetIndex = Number(rowElement.dataset.index);
+
+    if (!targetCategory || Number.isNaN(targetIndex)) return;
+    if (dragged.category !== targetCategory) return;
+
+    const rowRect = rowElement.getBoundingClientRect();
+    const dropIndex =
+      touch.clientY < rowRect.top + rowRect.height / 2
+        ? targetIndex
+        : targetIndex + 1;
+
+    previewCategoryReorder(targetCategory, dragged.productId, dropIndex);
+  };
+
+  const handleTouchEnd = async (e) => {
+    if (!isTouchDevice) return;
+
+    const dragged = draggedProductRef.current;
+    const touch = e.changedTouches?.[0];
+
+    if (!dragged || !touch) {
+      draggedProductRef.current = null;
+      setDraggingProductId(null);
+      return;
+    }
+
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const rowElement = element?.closest?.(".products-category-row");
+
+    if (!rowElement) {
+      draggedProductRef.current = null;
+      setDraggingProductId(null);
+      return;
+    }
+
+    const targetCategory = rowElement.dataset.category;
+    const targetIndex = Number(rowElement.dataset.index);
+
+    if (!targetCategory || Number.isNaN(targetIndex)) {
+      draggedProductRef.current = null;
+      setDraggingProductId(null);
+      return;
+    }
+
+    const rowRect = rowElement.getBoundingClientRect();
+    const dropIndex =
+      touch.clientY < rowRect.top + rowRect.height / 2
+        ? targetIndex
+        : targetIndex + 1;
+
+    if (dragged.category !== targetCategory) {
+      draggedProductRef.current = null;
+      setDraggingProductId(null);
+      return;
+    }
+
+    await reorderCategoryProducts(
+      dragged.category,
+      dragged.productId,
+      dropIndex,
+    );
+  };
+
+  const handleDragEnd = () => {
+    draggedProductRef.current = null;
+    setDraggingProductId(null);
   };
 
   const handleImageUpload = async (e) => {
@@ -572,19 +785,20 @@ const AdminDashboard = () => {
     });
   };
 
-  const handleToggleStock = async (productId, currentStatus) => {
+  const handleToggleStock = async (productId, isCurrentlyInStock) => {
     try {
+      const nextStockStatus = !isCurrentlyInStock;
       console.log(
         "Toggling stock for product:",
         productId,
         "Current status:",
-        currentStatus,
+        isCurrentlyInStock,
       );
       const token = localStorage.getItem("token");
       console.log("Token exists:", !!token);
 
       const response = await apiClient.put(`/products/${productId}`, {
-        in_stock: !currentStatus,
+        in_stock: nextStockStatus,
       });
 
       console.log("Stock update response:", response.data);
@@ -912,30 +1126,38 @@ const AdminDashboard = () => {
                   </label>
                 </div>
 
-                {pageTypeConfigForCategory(productFormData.category) && (
-                  <div className="form-row">
-                    {pageTypeConfigForCategory(
-                      productFormData.category,
-                    ).options.map((option) => (
-                      <div className="form-group" key={option.variant}>
-                        <label>
-                          <input
-                            type="checkbox"
-                            name={option.stockField}
-                            checked={productFormData[option.stockField]}
-                            onChange={(e) =>
-                              setProductFormData((prev) => ({
-                                ...prev,
-                                [option.stockField]: e.target.checked,
-                              }))
-                            }
-                          />
-                          {option.label} In Stock
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {(() => {
+                  const pageTypeConfig = pageTypeConfigForCategory(
+                    productFormData.category,
+                  );
+
+                  if (!pageTypeConfig?.options?.length) {
+                    return null;
+                  }
+
+                  return (
+                    <div className="form-row">
+                      {pageTypeConfig.options.map((option) => (
+                        <div className="form-group" key={option.variant}>
+                          <label>
+                            <input
+                              type="checkbox"
+                              name={option.stockField}
+                              checked={productFormData[option.stockField]}
+                              onChange={(e) =>
+                                setProductFormData((prev) => ({
+                                  ...prev,
+                                  [option.stockField]: e.target.checked,
+                                }))
+                              }
+                            />
+                            {option.label} In Stock
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
 
                 <div className="form-group">
                   <label htmlFor="product-images">
@@ -1081,100 +1303,157 @@ const AdminDashboard = () => {
                       </div>
 
                       <div className="products-category-rows">
-                        {productsByCategory[category].map((product, index) => (
-                          <div
-                            key={product.id}
-                            className="products-category-row"
-                          >
-                            <div className="product-move-buttons">
-                              <button
-                                type="button"
-                                className="product-move-btn"
-                                onClick={() =>
-                                  handleMoveProduct(product.id, "up")
+                        {(productsByCategory[category] || []).map(
+                          (product, index) => (
+                            <React.Fragment key={product.id}>
+                              <div
+                                className="products-drop-zone products-drop-zone-top"
+                                onDragOver={(e) =>
+                                  handleDragOver(e, category, index)
                                 }
-                                title="Move up"
-                                disabled={index === 0}
+                                onDrop={(e) => handleDrop(e, category, index)}
+                              />
+
+                              <div
+                                className={`products-category-row ${
+                                  draggingProductId === product.id
+                                    ? "is-dragging"
+                                    : ""
+                                }`}
+                                draggable={!isTouchDevice}
+                                data-category={category}
+                                data-index={index}
+                                onDragStart={(e) =>
+                                  handleDragStart(
+                                    e,
+                                    category,
+                                    index,
+                                    product.id,
+                                  )
+                                }
+                                onDragOver={(e) =>
+                                  handleDragOver(e, category, index + 1)
+                                }
+                                onDrop={(e) =>
+                                  handleDrop(e, category, index + 1)
+                                }
+                                onDragEnd={handleDragEnd}
                               >
-                                ↑
-                              </button>
-                              <button
-                                type="button"
-                                className="product-move-btn"
-                                onClick={() =>
-                                  handleMoveProduct(product.id, "down")
-                                }
-                                title="Move down"
-                                disabled={
-                                  index ===
-                                  productsByCategory[category].length - 1
-                                }
-                              >
-                                ↓
-                              </button>
-                            </div>
-                            <div className="product-row-main">
-                              <div className="product-row-title">
-                                <span className="product-row-id">
-                                  #{product.id}
-                                </span>
-                                <strong>{product.name}</strong>
-                              </div>
-                              <div className="product-row-meta">
-                                <span>Rs. {product.price}</span>
-                                {pageTypeConfigForCategory(
-                                  product.category,
-                                )?.options.map((option) => (
-                                  <span key={option.variant}>
-                                    {product[option.stockField]
-                                      ? `${option.shortLabel} ✓`
-                                      : `${option.shortLabel} ✕`}
-                                  </span>
-                                ))}
                                 <button
                                   type="button"
-                                  className={`stock-toggle-btn ${
-                                    product.in_stock
-                                      ? "in-stock"
-                                      : "out-of-stock"
-                                  }`}
-                                  onClick={() =>
-                                    handleToggleStock(
+                                  className="product-drag-handle"
+                                  onTouchStart={(e) =>
+                                    handleTouchStart(
+                                      e,
+                                      category,
+                                      index,
                                       product.id,
-                                      product.in_stock,
                                     )
                                   }
-                                  title="Click to toggle stock status"
+                                  onTouchMove={handleTouchMove}
+                                  onTouchEnd={handleTouchEnd}
+                                  onTouchCancel={handleTouchEnd}
+                                  aria-label="Drag to reorder product"
+                                  title="Drag to reorder"
                                 >
-                                  <span className="toggle-icon">
-                                    {product.in_stock ? "✓" : "✕"}
-                                  </span>
-                                  <span className="toggle-text">
+                                  ☰
+                                </button>
+                                <div className="product-row-main">
+                                  <div className="product-row-title">
+                                    <span className="product-row-id">
+                                      #{product.id}
+                                    </span>
+                                    <strong>{product.name}</strong>
+                                  </div>
+                                  <div className="product-row-meta">
+                                    <span>Rs. {product.price}</span>
+                                    {pageTypeConfigForCategory(product.category)
+                                      .showPageType && (
+                                      <span>
+                                        Type: {product.page_type || "N/A"}
+                                      </span>
+                                    )}
+                                    <span>
+                                      Stock:{" "}
+                                      {product.in_stock
+                                        ? "In stock"
+                                        : "Out of stock"}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="product-row-actions">
+                                  <button
+                                    type="button"
+                                    className="edit-btn"
+                                    onClick={() => handleEditProduct(product)}
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="delete-btn"
+                                    onClick={() =>
+                                      handleDeleteProduct(product.id)
+                                    }
+                                  >
+                                    Delete
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={`stock-toggle-btn ${
+                                      product.in_stock
+                                        ? "in-stock"
+                                        : "out-of-stock"
+                                    }`}
+                                    onClick={() =>
+                                      handleToggleStock(
+                                        product.id,
+                                        product.in_stock,
+                                      )
+                                    }
+                                    title={
+                                      product.in_stock
+                                        ? "Click to set out of stock"
+                                        : "Click to set in stock"
+                                    }
+                                  >
                                     {product.in_stock
                                       ? "In Stock"
                                       : "Out of Stock"}
-                                  </span>
-                                </button>
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                            <div className="product-row-actions">
-                              <button
-                                type="button"
-                                className="edit-btn"
-                                onClick={() => handleEditProduct(product)}
-                              >
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                className="delete-btn"
-                                onClick={() => handleDeleteProduct(product.id)}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+
+                              <div
+                                className="products-drop-zone products-drop-zone-bottom"
+                                onDragOver={(e) =>
+                                  handleDragOver(e, category, index + 1)
+                                }
+                                onDrop={(e) =>
+                                  handleDrop(e, category, index + 1)
+                                }
+                              />
+                            </React.Fragment>
+                          ),
+                        )}
+
+                        <div
+                          className="products-drop-zone products-drop-zone-end"
+                          onDragOver={(e) =>
+                            handleDragOver(
+                              e,
+                              category,
+                              (productsByCategory[category] || []).length,
+                            )
+                          }
+                          onDrop={(e) =>
+                            handleDrop(
+                              e,
+                              category,
+                              (productsByCategory[category] || []).length,
+                            )
+                          }
+                        />
                       </div>
                     </section>
                   ))}

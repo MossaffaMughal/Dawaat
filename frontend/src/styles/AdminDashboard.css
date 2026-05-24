@@ -269,7 +269,7 @@
 
 .products-category-rows {
   display: grid;
-  gap: 10px;
+  gap: 4px;
 }
 
 .products-category-row {
@@ -280,36 +280,88 @@
   border: 1px solid #edf0f4;
   border-radius: 10px;
   background: #fff;
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
 }
 
-.product-move-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.product-move-btn {
-  width: 32px;
-  height: 32px;
+.product-drag-handle {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  background: #fafafa;
+  color: #8b6f47;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: grab;
+  touch-action: none;
   padding: 0;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background: #f9f9f9;
-  color: #666;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
-.product-move-btn:hover:not(:disabled) {
-  background: #f0f0f0;
+.product-drag-handle:hover {
+  background: #f3ede6;
+  border-color: #d9c7b3;
+}
+
+.product-drag-handle:active {
+  cursor: grabbing;
+  transform: scale(0.98);
+}
+
+.products-category-row:active {
+  cursor: grabbing;
+}
+
+.products-category-row:hover {
   border-color: var(--primary-color);
-  color: var(--primary-color);
+  box-shadow: 0 6px 16px rgba(139, 111, 71, 0.08);
+  transform: translateY(-1px);
 }
 
-.product-move-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+.products-category-row.is-dragging {
+  opacity: 0.45;
+  transform: scale(0.995);
+  box-shadow: 0 10px 24px rgba(139, 111, 71, 0.12);
+}
+
+.products-drop-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 8px;
+  padding: 0;
+  border: 1px dashed transparent;
+  border-radius: 8px;
+  color: #a07f5b;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+.products-drop-zone:hover {
+  border-color: rgba(139, 111, 71, 0.28);
+  background: rgba(139, 111, 71, 0.05);
+}
+
+.products-drop-zone-top,
+.products-drop-zone-bottom,
+.products-drop-zone-end {
+  margin: 0;
 }
 
 .product-row-main {
@@ -343,6 +395,10 @@
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.products-category-row .product-row-actions button {
+  cursor: pointer;
 }
 
 .products-category-row .stock-toggle-btn {
@@ -855,16 +911,40 @@ body.admin-form-open::before {
   .products-category-row {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 10px;
     padding: 12px;
   }
 
-  .product-move-buttons {
+  .products-drop-zone {
+    display: none;
+  }
+
+  .product-drag-handle {
+    width: 44px;
+    height: 44px;
+    align-self: flex-start;
+  }
+
+  .product-row-main {
     width: 100%;
   }
 
-  .product-move-btn {
-    flex: 1;
+  .product-row-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  .product-row-actions .edit-btn,
+  .product-row-actions .delete-btn,
+  .product-row-actions .stock-toggle-btn {
+    width: 100%;
+    margin: 0;
+    flex: none;
+    justify-content: center;
+    padding: 8px 10px;
+    font-size: 12px;
   }
 
   .product-row-title {
@@ -873,16 +953,6 @@ body.admin-form-open::before {
 
   .product-row-meta {
     gap: 8px;
-  }
-
-  .product-row-actions {
-    width: 100%;
-  }
-
-  .product-row-actions .edit-btn,
-  .product-row-actions .delete-btn {
-    flex: 1;
-    justify-content: center;
   }
 
   .admin-section h2 {
@@ -1047,21 +1117,34 @@ body.admin-form-open::before {
     padding: 10px;
   }
 
+  .product-drag-handle {
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
+  }
+
+  .products-drop-zone {
+    display: none;
+  }
+
+  .product-row-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .product-row-actions .edit-btn,
+  .product-row-actions .delete-btn,
+  .product-row-actions .stock-toggle-btn {
+    padding: 7px 8px;
+    font-size: 11px;
+  }
+
   .product-row-title strong {
     font-size: 14px;
   }
 
   .product-row-meta {
     font-size: 12px;
-  }
-
-  .product-row-actions {
-    flex-direction: column;
-  }
-
-  .product-row-actions .edit-btn,
-  .product-row-actions .delete-btn {
-    width: 100%;
   }
 
   .admin-table {

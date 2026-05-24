@@ -46,6 +46,10 @@
   margin-bottom: 20px;
   border-bottom: 2px solid #f0f0f0;
   padding-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .filters-header h3 {
@@ -56,6 +60,30 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.filters-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filters-toggle-btn {
+  display: none;
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  color: #555;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.filters-content {
+  display: block;
 }
 
 .filters-header i {
@@ -206,7 +234,6 @@
   font-size: 12px;
   cursor: pointer;
   padding: 0;
-  float: right;
   text-decoration: underline;
   font-weight: 600;
 }
@@ -349,7 +376,7 @@
   }
 
   .filters-header {
-    margin-bottom: 12px;
+    margin-bottom: 0;
     padding-bottom: 10px;
     border-bottom: 1px solid #e8e8e8;
   }
@@ -363,6 +390,19 @@
 
   .filters-header i {
     font-size: 12px;
+  }
+
+  .filters-toggle-btn {
+    display: inline-flex;
+  }
+
+  .filters-content {
+    display: none;
+    margin-top: 12px;
+  }
+
+  .filters-content.open {
+    display: block;
   }
 
   .search-box {
@@ -473,7 +513,7 @@
   }
 
   .filters-header {
-    margin-bottom: 8px;
+    margin-bottom: 0;
     padding-bottom: 8px;
     border-bottom: 1px solid #e8e8e8;
   }
@@ -488,6 +528,16 @@
 
   .filters-header i {
     font-size: 10px;
+  }
+
+  .filters-toggle-btn {
+    padding: 5px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+  }
+
+  .filters-content {
+    margin-top: 10px;
   }
 
   .search-box {

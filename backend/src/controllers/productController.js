@@ -30,7 +30,7 @@ export const getAllProducts = async (req, res) => {
 
     // Category filter
     if (category) {
-      query += ` AND p.category = $${paramCount}`;
+      query += ` AND LOWER(TRIM(p.category)) = LOWER(TRIM($${paramCount}))`;
       params.push(category);
       console.log(`Adding category filter: p.category = '${category}'`);
       paramCount++;
