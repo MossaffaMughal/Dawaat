@@ -5,6 +5,12 @@ import { useCart } from "../context/CartContext";
 import apiClient from "../utils/apiClient";
 import "../styles/Checkout.css";
 
+const isLahoreCity = (city) => {
+  if (!city) return false;
+  const normalized = city.trim().toLowerCase();
+  return normalized === "lahore" || normalized === "lhr";
+};
+
 const Checkout = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -33,6 +39,8 @@ const Checkout = () => {
     shippingMethod: "standard",
   });
   const [loading, setLoading] = useState(false);
+  const [standardShippingCost, setStandardShippingCost] = useState(250);
+  const [lahoreShippingCost, setLahoreShippingCost] = useState(250);
   const [shippingCost, setShippingCost] = useState(250);
 
   const checkoutData = JSON.parse(localStorage.getItem("checkoutData") || "{}");
@@ -42,19 +50,43 @@ const Checkout = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  // Determine which shipping cost to display based on city
+  const updateShippingForCity = (city, standardCost, lahoreCost) => {
+    if (isLahoreCity(city)) {
+      setShippingCost(lahoreCost);
+    } else {
+      setShippingCost(standardCost);
+    }
+  };
+
   useEffect(() => {
-    // Fetch current shipping cost
-    const fetchShippingCost = async () => {
+    // Fetch both shipping costs
+    const fetchShippingCosts = async () => {
       try {
-        const response = await apiClient.get("/orders/shipping/cost");
-        setShippingCost(parseFloat(response.data.shippingCost));
+        const [standardRes, lahoreRes] = await Promise.all([
+          apiClient.get("/orders/shipping/cost"),
+          apiClient.get("/orders/shipping/cost/lahore"),
+        ]);
+        const standard = parseFloat(standardRes.data.shippingCost);
+        const lahore = parseFloat(lahoreRes.data.lahoreShippingCost);
+        setStandardShippingCost(standard);
+        setLahoreShippingCost(lahore);
+        // Set initial shipping cost based on pre-filled city
+        updateShippingForCity(formData.city, standard, lahore);
       } catch (error) {
-        console.error("Error fetching shipping cost:", error);
+        console.error("Error fetching shipping costs:", error);
+        setStandardShippingCost(250);
+        setLahoreShippingCost(250);
         setShippingCost(250); // Default fallback
       }
     };
-    fetchShippingCost();
+    fetchShippingCosts();
   }, []);
+
+  // Re-evaluate shipping cost when city changes
+  useEffect(() => {
+    updateShippingForCity(formData.city, standardShippingCost, lahoreShippingCost);
+  }, [formData.city, standardShippingCost, lahoreShippingCost]);
 
   // Update form data when user profile data loads
   useEffect(() => {

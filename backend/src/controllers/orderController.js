@@ -1,5 +1,11 @@
 import pool from "../config/database.js";
 
+const isLahoreCity = (city) => {
+  if (!city) return false;
+  const normalized = city.trim().toLowerCase();
+  return normalized === "lahore" || normalized === "lhr";
+};
+
 const generateOrderNumber = () => {
   return (
     "ORD-" +
@@ -79,11 +85,19 @@ export const createOrder = async (req, res) => {
       addressLength: address?.length,
     });
 
-    // Get shipping cost from settings
-    const settingsResult = await client.query(
-      `SELECT value FROM settings WHERE key = 'shipping_cost' LIMIT 1`,
-    );
-    const shippingCost = settingsResult.rows[0]?.value || 250;
+    // Get shipping cost from settings - use Lahore cost if city is Lahore
+    let shippingCost;
+    if (isLahoreCity(city)) {
+      const lahoreResult = await client.query(
+        `SELECT value FROM settings WHERE key = 'shipping_cost_lahore' LIMIT 1`,
+      );
+      shippingCost = lahoreResult.rows[0]?.value || 250;
+    } else {
+      const settingsResult = await client.query(
+        `SELECT value FROM settings WHERE key = 'shipping_cost' LIMIT 1`,
+      );
+      shippingCost = settingsResult.rows[0]?.value || 250;
+    }
 
     const orderNumber = generateOrderNumber();
 
@@ -348,6 +362,48 @@ export const updateShippingCost = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error updating shipping cost", error: error.message });
+  }
+};
+
+export const getLahoreShippingCost = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT value FROM settings WHERE key = 'shipping_cost_lahore' LIMIT 1`,
+    );
+    const lahoreShippingCost = result.rows[0]?.value || 250;
+    res.json({ lahoreShippingCost: parseFloat(lahoreShippingCost) });
+  } catch (error) {
+    console.error("Get Lahore shipping cost error:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching Lahore shipping cost", error: error.message });
+  }
+};
+
+export const updateLahoreShippingCost = async (req, res) => {
+  try {
+    const { lahoreShippingCost } = req.body;
+
+    if (!lahoreShippingCost || lahoreShippingCost <= 0) {
+      return res.status(400).json({ message: "Valid Lahore shipping cost required" });
+    }
+
+    await pool.query(
+      `UPDATE settings SET value = $1, updated_at = CURRENT_TIMESTAMP 
+       WHERE key = 'shipping_cost_lahore'
+       RETURNING *`,
+      [lahoreShippingCost],
+    );
+
+    res.json({
+      message: "Lahore shipping cost updated successfully",
+      lahoreShippingCost: parseFloat(lahoreShippingCost),
+    });
+  } catch (error) {
+    console.error("Update Lahore shipping cost error:", error);
+    res
+      .status(500)
+      .json({ message: "Error updating Lahore shipping cost", error: error.message });
   }
 };
 

@@ -8,6 +8,8 @@ import {
   getUserOrders,
   getShippingCost,
   updateShippingCost,
+  getLahoreShippingCost,
+  updateLahoreShippingCost,
   getHeroBannerUrl,
   updateHeroBannerUrl,
   getPromoBanner,
@@ -20,6 +22,7 @@ const router = express.Router();
 // Public routes
 router.post("/", createOrder);
 router.get("/shipping/cost", getShippingCost);
+router.get("/shipping/cost/lahore", getLahoreShippingCost);
 router.get("/hero-banner", getHeroBannerUrl);
 router.get("/promo-banner", getPromoBanner);
 router.get("/user/:userId", getUserOrders);
@@ -30,6 +33,12 @@ router.put(
   authenticateToken,
   authorizeAdmin,
   updateShippingCost,
+);
+router.put(
+  "/shipping/cost/lahore",
+  authenticateToken,
+  authorizeAdmin,
+  updateLahoreShippingCost,
 );
 router.put(
   "/hero-banner",

@@ -62,6 +62,9 @@ const AdminDashboard = () => {
   const [shippingCost, setShippingCost] = useState(250);
   const [shippingCostInput, setShippingCostInput] = useState(250);
   const [savingShippingCost, setSavingShippingCost] = useState(false);
+  const [lahoreShippingCost, setLahoreShippingCost] = useState(250);
+  const [lahoreShippingCostInput, setLahoreShippingCostInput] = useState(250);
+  const [savingLahoreShippingCost, setSavingLahoreShippingCost] = useState(false);
   const [heroBannerUrl, setHeroBannerUrl] = useState("");
   const [heroBannerUrlInput, setHeroBannerUrlInput] = useState("");
   const [savingHeroBanner, setSavingHeroBanner] = useState(false);
@@ -73,6 +76,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchAdminData();
     fetchShippingCost();
+    fetchLahoreShippingCost();
     fetchHeroBannerUrl();
   }, []);
 
@@ -119,6 +123,32 @@ const AdminDashboard = () => {
       setShippingCostInput(response.data.shippingCost);
     } catch (error) {
       console.error("Error fetching shipping cost:", error);
+    }
+  };
+
+  const fetchLahoreShippingCost = async () => {
+    try {
+      const response = await apiClient.get("/orders/shipping/cost/lahore");
+      setLahoreShippingCost(response.data.lahoreShippingCost);
+      setLahoreShippingCostInput(response.data.lahoreShippingCost);
+    } catch (error) {
+      console.error("Error fetching Lahore shipping cost:", error);
+    }
+  };
+
+  const handleSaveLahoreShippingCost = async () => {
+    try {
+      setSavingLahoreShippingCost(true);
+      await apiClient.put("/orders/shipping/cost/lahore", {
+        lahoreShippingCost: parseFloat(lahoreShippingCostInput),
+      });
+      setLahoreShippingCost(lahoreShippingCostInput);
+      showNotification("Lahore shipping cost updated successfully!", "success");
+    } catch (error) {
+      console.error("Error updating Lahore shipping cost:", error);
+      showNotification("Error updating Lahore shipping cost", "error");
+    } finally {
+      setSavingLahoreShippingCost(false);
     }
   };
 
@@ -1573,6 +1603,45 @@ const AdminDashboard = () => {
                 {shippingCost === shippingCostInput && (
                   <p className="setting-info">
                     ✓ Current shipping cost: Rs. {shippingCost}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="settings-card">
+              <div className="setting-item">
+                <h3>Lahore Shipping Cost</h3>
+                <p className="setting-description">
+                  Set the shipping cost specifically for Lahore (applies when city is Lahore/LHR)
+                </p>
+
+                <div className="setting-control">
+                  <div className="input-group">
+                    <span className="currency">Rs.</span>
+                    <input
+                      type="number"
+                      value={lahoreShippingCostInput}
+                      onChange={(e) =>
+                        setLahoreShippingCostInput(parseFloat(e.target.value) || 0)
+                      }
+                      min="0"
+                      step="1"
+                      placeholder="Enter Lahore shipping cost"
+                      className="setting-input"
+                    />
+                  </div>
+                  <button
+                    className="btn-save-setting"
+                    onClick={handleSaveLahoreShippingCost}
+                    disabled={savingLahoreShippingCost}
+                  >
+                    {savingLahoreShippingCost ? "Saving..." : "Save"}
+                  </button>
+                </div>
+
+                {lahoreShippingCost === lahoreShippingCostInput && (
+                  <p className="setting-info">
+                    ✓ Current Lahore shipping cost: Rs. {lahoreShippingCost}
                   </p>
                 )}
               </div>

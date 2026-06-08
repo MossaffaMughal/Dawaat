@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import apiClient from "../utils/apiClient";
 import { useCart } from "../context/CartContext";
 import { useParams } from "react-router-dom";
@@ -29,10 +29,13 @@ const ProductDescription = () => {
     product?.sale_price !== "";
   const currentPrice =
     product?.current_price ?? product?.sale_price ?? product?.price;
-  const pageTypeConfig = getPageTypeConfig(product?.category);
-  const defaultVariant = getAvailablePageTypeVariant(
-    product?.category,
-    product,
+  const pageTypeConfig = useMemo(
+    () => getPageTypeConfig(product?.category),
+    [product?.category],
+  );
+  const defaultVariant = useMemo(
+    () => getAvailablePageTypeVariant(product?.category, product),
+    [product],
   );
 
   useEffect(() => {
