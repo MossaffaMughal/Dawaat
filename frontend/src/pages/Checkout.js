@@ -71,8 +71,6 @@ const Checkout = () => {
         const lahore = parseFloat(lahoreRes.data.lahoreShippingCost);
         setStandardShippingCost(standard);
         setLahoreShippingCost(lahore);
-        // Set initial shipping cost based on pre-filled city
-        updateShippingForCity(formData.city, standard, lahore);
       } catch (error) {
         console.error("Error fetching shipping costs:", error);
         setStandardShippingCost(250);
