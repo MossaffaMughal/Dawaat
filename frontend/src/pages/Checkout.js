@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
@@ -43,6 +43,8 @@ const Checkout = () => {
   const [lahoreShippingCost, setLahoreShippingCost] = useState(250);
   const [shippingCost, setShippingCost] = useState(250);
 
+  const initialCityRef = useRef(formData.city);
+
   const checkoutData = JSON.parse(localStorage.getItem("checkoutData") || "{}");
 
   const showNotification = (message, type = "success") => {
@@ -82,8 +84,8 @@ const Checkout = () => {
       setStandardShippingCost(standard);
       setLahoreShippingCost(lahore);
 
-      // Immediately set shipping cost based on current city
-      updateShippingForCity(formData.city, standard, lahore);
+      // Immediately set shipping cost based on current city (use ref to avoid useEffect dep warning)
+      updateShippingForCity(initialCityRef.current, standard, lahore);
     };
     fetchShippingCosts();
   }, []);
