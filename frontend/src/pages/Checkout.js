@@ -60,23 +60,30 @@ const Checkout = () => {
   };
 
   useEffect(() => {
-    // Fetch both shipping costs
+    // Fetch both shipping costs independently so one failure doesn't break the other
     const fetchShippingCosts = async () => {
+      let standard = 250;
+      let lahore = 250;
+
       try {
-        const [standardRes, lahoreRes] = await Promise.all([
-          apiClient.get("/orders/shipping/cost"),
-          apiClient.get("/orders/shipping/cost/lahore"),
-        ]);
-        const standard = parseFloat(standardRes.data.shippingCost);
-        const lahore = parseFloat(lahoreRes.data.lahoreShippingCost);
-        setStandardShippingCost(standard);
-        setLahoreShippingCost(lahore);
+        const standardRes = await apiClient.get("/orders/shipping/cost");
+        standard = parseFloat(standardRes.data.shippingCost);
       } catch (error) {
-        console.error("Error fetching shipping costs:", error);
-        setStandardShippingCost(250);
-        setLahoreShippingCost(250);
-        setShippingCost(250); // Default fallback
+        console.error("Error fetching standard shipping cost:", error);
       }
+
+      try {
+        const lahoreRes = await apiClient.get("/orders/shipping/cost/lahore");
+        lahore = parseFloat(lahoreRes.data.lahoreShippingCost);
+      } catch (error) {
+        console.error("Error fetching Lahore shipping cost:", error);
+      }
+
+      setStandardShippingCost(standard);
+      setLahoreShippingCost(lahore);
+
+      // Immediately set shipping cost based on current city
+      updateShippingForCity(formData.city, standard, lahore);
     };
     fetchShippingCosts();
   }, []);
