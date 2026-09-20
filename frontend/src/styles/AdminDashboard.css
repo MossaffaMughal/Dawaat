@@ -815,31 +815,35 @@ body.admin-form-open::before {
 
   .admin-menu {
     flex-direction: row;
-    gap: 0;
-    flex: 1;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 0 0 100%;
     width: 100%;
-    padding: 0;
-    overflow-x: auto;
-    scrollbar-width: thin;
+    padding: 10px 12px;
+    justify-content: center;
   }
 
   .admin-menu-item {
     flex: 0 0 auto;
-    min-width: 112px;
+    min-width: 0;
     text-align: center;
-    padding: 10px 8px;
+    padding: 8px 14px;
     border-left: none;
-    border-bottom: 3px solid transparent;
+    border-bottom: none;
+    border-radius: 20px;
+    background-color: rgba(255, 255, 255, 0.1);
     font-size: 13px;
+    white-space: nowrap;
   }
 
   .admin-menu-item:hover {
-    background-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(255, 255, 255, 0.2);
   }
 
   .admin-menu-item.active {
-    background-color: rgba(255, 255, 255, 0.2);
-    border-bottom-color: #ffc0cb;
+    background-color: white;
+    color: var(--primary-color);
+    font-weight: 700;
   }
 
   .admin-table td:last-child {
@@ -884,9 +888,9 @@ body.admin-form-open::before {
   }
 
   .admin-menu-item {
-    padding: 14px 10px;
+    padding: 8px 12px;
     font-size: 13px;
-    min-width: 108px;
+    min-width: 0;
   }
 
   .admin-form {
@@ -1101,13 +1105,15 @@ body.admin-form-open::before {
 
   .admin-menu {
     flex-direction: row;
+    gap: 6px;
+    padding: 8px;
   }
 
   .admin-menu-item {
-    padding: 12px 8px;
+    padding: 7px 10px;
     text-align: center;
     font-size: 12px;
-    min-width: 98px;
+    min-width: 0;
   }
 
   .products-category-section {
