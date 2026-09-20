@@ -48,16 +48,29 @@ const ReviewModel = {
   },
 
   // Get recent reviews for public display
-  getRecentReviews: async (limit = 6) => {
+  getRecentReviews: async (limit = 5, offset = 0) => {
     const query = `
       SELECT r.*, p.name as product_name
       FROM reviews r
       JOIN products p ON r.product_id = p.id
       ORDER BY r.created_at DESC
-      LIMIT $1
+      LIMIT $1 OFFSET $2
     `;
-    const result = await pool.query(query, [limit]);
+    const result = await pool.query(query, [limit, offset]);
     return result.rows;
+  },
+
+  // Get total review count and average rating across all reviews
+  getOverallStats: async () => {
+    const query = `SELECT COUNT(*) as count, AVG(rating) as average_rating FROM reviews`;
+    const result = await pool.query(query);
+    const { count, average_rating } = result.rows[0];
+    return {
+      count: parseInt(count, 10),
+      averageRating: average_rating
+        ? Math.round(average_rating * 10) / 10
+        : 0,
+    };
   },
 
   // Delete a review
