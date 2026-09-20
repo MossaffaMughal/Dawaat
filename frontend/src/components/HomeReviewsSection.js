@@ -69,15 +69,19 @@ const HomeReviewsSection = () => {
         <h2>What Customers Are Saying</h2>
         <p>Recent reviews from our community</p>
         {summary.count > 0 && (
-          <p className="home-reviews-summary">
-            <span className="home-reviews-summary-stars">
-              {renderStars(Math.round(summary.averageRating))}
-            </span>
-            <span className="home-reviews-summary-text">
-              {summary.averageRating.toFixed(1)} out of 5 · {summary.count}{" "}
-              {summary.count === 1 ? "review" : "reviews"}
-            </span>
-          </p>
+          <div className="home-reviews-summary">
+            <div className="home-reviews-summary-row">
+              <span className="home-reviews-summary-stars">
+                {renderStars(Math.round(summary.averageRating))}
+              </span>
+              <span className="home-reviews-summary-text">
+                {summary.averageRating.toFixed(1)} out of 5.0
+              </span>
+            </div>
+            <div className="home-reviews-summary-count">
+              {summary.count} {summary.count === 1 ? "review" : "reviews"}
+            </div>
+          </div>
         )}
       </div>
 

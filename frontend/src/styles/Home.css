@@ -279,11 +279,14 @@
 }
 
 .home-reviews-summary {
+  margin-top: 12px !important;
+}
+
+.home-reviews-summary-row {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin-top: 12px !important;
 }
 
 .home-reviews-summary-stars {
@@ -296,6 +299,12 @@
   color: #333;
   font-size: 14px;
   font-weight: 600;
+}
+
+.home-reviews-summary-count {
+  margin-top: 4px;
+  color: #666;
+  font-size: 13px;
 }
 
 .see-more-reviews-button {
