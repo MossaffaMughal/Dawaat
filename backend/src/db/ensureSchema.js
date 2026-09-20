@@ -231,6 +231,30 @@ export const ensureDatabaseSchema = async () => {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS categories (
+      id SERIAL PRIMARY KEY,
+      category_key VARCHAR(100) UNIQUE NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      image_url VARCHAR(500) NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    INSERT INTO categories (category_key, name, image_url, sort_order)
+    VALUES
+      ('Notebook', 'Journals', '/images/categories/journals.jpeg', 0),
+      ('Bookmark', 'Bookmarks', '/images/categories/bookmarks.jpeg', 1),
+      ('Notebooks', 'Notebooks', '/images/categories/notebooks.jpeg', 2),
+      ('Cards', 'Cards', '/images/categories/cards.jpeg', 3),
+      ('Stickers', 'Stickers', '/images/categories/stickers.jpeg', 4),
+      ('Bundles', 'Bundles', '/images/categories/notebooks.jpeg', 5)
+    ON CONFLICT (category_key) DO NOTHING;
+  `);
+
+  await pool.query(`
     SELECT setval(
       pg_get_serial_sequence('settings', 'id'),
       GREATEST(COALESCE((SELECT MAX(id) FROM settings), 1), 1),

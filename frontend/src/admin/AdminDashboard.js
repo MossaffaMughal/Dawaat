@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import AdminReviews from "./AdminReviews";
 import DiscountCodesPanel from "./DiscountCodesPanel";
 import PromoBannerPanel from "./PromoBannerPanel";
+import CategoryManagement from "./CategoryManagement";
 import ConfirmDialog from "../components/ConfirmDialog";
 import OrderDetailsDialog from "../components/OrderDetailsDialog";
 import { compressImageFile } from "../utils/compressImage";
@@ -64,7 +65,8 @@ const AdminDashboard = () => {
   const [savingShippingCost, setSavingShippingCost] = useState(false);
   const [lahoreShippingCost, setLahoreShippingCost] = useState(250);
   const [lahoreShippingCostInput, setLahoreShippingCostInput] = useState(250);
-  const [savingLahoreShippingCost, setSavingLahoreShippingCost] = useState(false);
+  const [savingLahoreShippingCost, setSavingLahoreShippingCost] =
+    useState(false);
   const [heroBannerUrl, setHeroBannerUrl] = useState("");
   const [heroBannerUrlInput, setHeroBannerUrlInput] = useState("");
   const [savingHeroBanner, setSavingHeroBanner] = useState(false);
@@ -934,6 +936,12 @@ const AdminDashboard = () => {
             📦 Products
           </button>
           <button
+            className={`admin-menu-item ${activeTab === "categories" ? "active" : ""}`}
+            onClick={() => setActiveTab("categories")}
+          >
+            🗂️ Categories
+          </button>
+          <button
             className={`admin-menu-item ${activeTab === "orders" ? "active" : ""}`}
             onClick={() => {
               console.log("ORDERS BUTTON CLICKED");
@@ -1492,6 +1500,9 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* CATEGORIES TAB */}
+        {activeTab === "categories" && <CategoryManagement />}
+
         {/* ORDERS TAB */}
         {activeTab === "orders" && (
           <div className="admin-section">
@@ -1612,7 +1623,8 @@ const AdminDashboard = () => {
               <div className="setting-item">
                 <h3>Lahore Shipping Cost</h3>
                 <p className="setting-description">
-                  Set the shipping cost specifically for Lahore (applies when city is Lahore/LHR)
+                  Set the shipping cost specifically for Lahore (applies when
+                  city is Lahore/LHR)
                 </p>
 
                 <div className="setting-control">
@@ -1622,7 +1634,9 @@ const AdminDashboard = () => {
                       type="number"
                       value={lahoreShippingCostInput}
                       onChange={(e) =>
-                        setLahoreShippingCostInput(parseFloat(e.target.value) || 0)
+                        setLahoreShippingCostInput(
+                          parseFloat(e.target.value) || 0,
+                        )
                       }
                       min="0"
                       step="1"

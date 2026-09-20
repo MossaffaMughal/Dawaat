@@ -10,6 +10,7 @@ import discountCodeRoutes from "./routes/discountCodeRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
 import { initStorage, testSupabaseConnection } from "./config/supabase.js";
 import { uploadImage } from "./services/uploadService.js";
 import { testDatabaseConnection } from "./config/database.js";
@@ -153,6 +154,7 @@ app.use("/api/discount-codes", discountCodeRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/contacts", contactRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/categories", categoryRoutes);
 
 // Explicit OPTIONS handler for preflight requests
 app.options("/api/upload", cors(corsOptions));

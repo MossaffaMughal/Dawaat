@@ -6,10 +6,44 @@ import "../styles/Home.css";
 import ProductCard from "../components/ProductCard";
 import HomeReviewsSection from "../components/HomeReviewsSection";
 
+const fallbackCategories = [
+  {
+    id: "notebook",
+    category_key: "Notebook",
+    name: "Journals",
+    image_url: "/images/categories/journals.jpeg",
+  },
+  {
+    id: "bookmark",
+    category_key: "Bookmark",
+    name: "Bookmarks",
+    image_url: "/images/categories/bookmarks.jpeg",
+  },
+  {
+    id: "notebooks",
+    category_key: "Notebooks",
+    name: "Notebooks",
+    image_url: "/images/categories/notebooks.jpeg",
+  },
+  {
+    id: "cards",
+    category_key: "Cards",
+    name: "Cards",
+    image_url: "/images/categories/cards.jpeg",
+  },
+  {
+    id: "stickers",
+    category_key: "Stickers",
+    name: "Stickers",
+    image_url: "/images/categories/stickers.jpeg",
+  },
+];
+
 const Home = () => {
   const [products, setProducts] = useState([]);
   const [notification, setNotification] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
   const [heroBannerUrl, setHeroBannerUrl] = useState(
     "/images/banners/hero-banner.jpeg",
   );
@@ -18,6 +52,7 @@ const Home = () => {
   useEffect(() => {
     fetchProducts();
     fetchHeroBanner();
+    fetchCategories();
   }, []);
 
   const fetchProducts = async () => {
@@ -28,6 +63,16 @@ const Home = () => {
       console.error("Error fetching products:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await apiClient.get("/categories");
+      setCategories(response.data || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setCategories(fallbackCategories);
     }
   };
 
@@ -68,69 +113,22 @@ const Home = () => {
       <section className="featured-categories">
         <h2>Featured Categories</h2>
         <div className="categories-grid">
-          <Link to="/products?category=Notebook" className="category-card-link">
-            <div className="category-card">
-              <div
-                className="category-image"
-                style={{
-                  backgroundImage: "url(/images/categories/journals.jpeg)",
-                }}
-              >
-                <span className="category-label">Journals</span>
+          {categories.map((category) => (
+            <Link
+              to={`/products?category=${encodeURIComponent(category.category_key)}`}
+              className="category-card-link"
+              key={category.id}
+            >
+              <div className="category-card">
+                <div
+                  className="category-image"
+                  style={{ backgroundImage: `url(${category.image_url})` }}
+                >
+                  <span className="category-label">{category.name}</span>
+                </div>
               </div>
-            </div>
-          </Link>
-          <Link to="/products?category=Bookmark" className="category-card-link">
-            <div className="category-card">
-              <div
-                className="category-image"
-                style={{
-                  backgroundImage: "url(/images/categories/bookmarks.jpeg)",
-                }}
-              >
-                <span className="category-label">Bookmarks</span>
-              </div>
-            </div>
-          </Link>
-          <Link
-            to="/products?category=Notebooks"
-            className="category-card-link"
-          >
-            <div className="category-card">
-              <div
-                className="category-image"
-                style={{
-                  backgroundImage: "url(/images/categories/notebooks.jpeg)",
-                }}
-              >
-                <span className="category-label">Notebooks</span>
-              </div>
-            </div>
-          </Link>
-          <Link to="/products?category=Cards" className="category-card-link">
-            <div className="category-card">
-              <div
-                className="category-image"
-                style={{
-                  backgroundImage: "url(/images/categories/cards.jpeg)",
-                }}
-              >
-                <span className="category-label">Cards</span>
-              </div>
-            </div>
-          </Link>
-          <Link to="/products?category=Stickers" className="category-card-link">
-            <div className="category-card">
-              <div
-                className="category-image"
-                style={{
-                  backgroundImage: "url(/images/categories/stickers.jpeg)",
-                }}
-              >
-                <span className="category-label">Stickers</span>
-              </div>
-            </div>
-          </Link>
+            </Link>
+          ))}
         </div>
       </section>
 

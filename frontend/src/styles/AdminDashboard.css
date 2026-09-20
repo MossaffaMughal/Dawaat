@@ -819,10 +819,13 @@ body.admin-form-open::before {
     flex: 1;
     width: 100%;
     padding: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
   }
 
   .admin-menu-item {
-    flex: 1;
+    flex: 0 0 auto;
+    min-width: 112px;
     text-align: center;
     padding: 10px 8px;
     border-left: none;
@@ -883,6 +886,7 @@ body.admin-form-open::before {
   .admin-menu-item {
     padding: 14px 10px;
     font-size: 13px;
+    min-width: 108px;
   }
 
   .admin-form {
@@ -1103,6 +1107,7 @@ body.admin-form-open::before {
     padding: 12px 8px;
     text-align: center;
     font-size: 12px;
+    min-width: 98px;
   }
 
   .products-category-section {
