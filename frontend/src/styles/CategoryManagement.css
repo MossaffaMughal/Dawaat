@@ -1,3 +1,16 @@
+.category-management-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.category-add-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .category-management-intro {
   margin: -14px 0 24px;
   color: #666;
@@ -134,6 +147,10 @@
 }
 
 @media (max-width: 600px) {
+  .category-add-button {
+    width: 100%;
+  }
+
   .category-management-row {
     align-items: flex-start;
     flex-wrap: wrap;

@@ -16,6 +16,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalOrders: 0,
@@ -272,12 +273,14 @@ const AdminDashboard = () => {
     console.log("fetchAdminData() called!");
     try {
       setLoading(true);
-      const [ordersRes, productsRes] = await Promise.all([
+      const [ordersRes, productsRes, categoriesRes] = await Promise.all([
         apiClient.get("/orders"),
         apiClient.get("/products"),
+        apiClient.get("/categories"),
       ]);
 
       setOrders(ordersRes.data);
+      setCategories(categoriesRes.data || []);
       const sortedProducts = [...productsRes.data].sort(
         (a, b) =>
           String(a.category || "").localeCompare(String(b.category || "")) ||
@@ -431,7 +434,10 @@ const AdminDashboard = () => {
       return "Journal";
     }
 
-    return category;
+    const matchedCategory = categories.find(
+      (item) => item.category_key === category,
+    );
+    return matchedCategory?.name || category;
   };
 
   const pageTypeConfigForCategory = (category) =>
@@ -1138,12 +1144,14 @@ const AdminDashboard = () => {
                     value={productFormData.category}
                     onChange={handleProductInputChange}
                   >
-                    <option value="Notebook">Journal</option>
-                    <option value="Bookmark">Bookmark</option>
-                    <option value="Notebooks">Notebooks</option>
-                    <option value="Cards">Cards</option>
-                    <option value="Stickers">Stickers</option>
-                    <option value="Bundles">Bundles</option>
+                    {categories.map((category) => (
+                      <option
+                        key={category.id}
+                        value={category.category_key}
+                      >
+                        {getCategoryDisplayName(category.category_key)}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

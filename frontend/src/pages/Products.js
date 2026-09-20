@@ -18,7 +18,21 @@ const Products = () => {
   const [maxPrice, setMaxPrice] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
   const { addToCart } = useCart();
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await apiClient.get("/categories");
+        setCategories(response.data || []);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const matchesCategoryFilter = (productCategory, selectedCategory) => {
     if (selectedCategory === "all") return true;
@@ -208,66 +222,23 @@ const Products = () => {
                   />
                   <span>All Products</span>
                 </label>
-                <label className={filter === "Notebook" ? "active" : ""}>
-                  <input
-                    type="radio"
-                    name="category"
-                    value="Notebook"
-                    checked={filter === "Notebook"}
-                    onChange={(e) => setFilter(e.target.value)}
-                  />
-                  <span>Journals</span>
-                </label>
-                <label className={filter === "Bookmark" ? "active" : ""}>
-                  <input
-                    type="radio"
-                    name="category"
-                    value="Bookmark"
-                    checked={filter === "Bookmark"}
-                    onChange={(e) => setFilter(e.target.value)}
-                  />
-                  <span>Bookmarks</span>
-                </label>
-                <label className={filter === "Notebooks" ? "active" : ""}>
-                  <input
-                    type="radio"
-                    name="category"
-                    value="Notebooks"
-                    checked={filter === "Notebooks"}
-                    onChange={(e) => setFilter(e.target.value)}
-                  />
-                  <span>Notebooks</span>
-                </label>
-                <label className={filter === "Cards" ? "active" : ""}>
-                  <input
-                    type="radio"
-                    name="category"
-                    value="Cards"
-                    checked={filter === "Cards"}
-                    onChange={(e) => setFilter(e.target.value)}
-                  />
-                  <span>Cards</span>
-                </label>
-                <label className={filter === "Stickers" ? "active" : ""}>
-                  <input
-                    type="radio"
-                    name="category"
-                    value="Stickers"
-                    checked={filter === "Stickers"}
-                    onChange={(e) => setFilter(e.target.value)}
-                  />
-                  <span>Stickers</span>
-                </label>
-                <label className={filter === "Bundles" ? "active" : ""}>
-                  <input
-                    type="radio"
-                    name="category"
-                    value="Bundles"
-                    checked={filter === "Bundles"}
-                    onChange={(e) => setFilter(e.target.value)}
-                  />
-                  <span>Bundles</span>
-                </label>
+                {categories.map((category) => (
+                  <label
+                    key={category.id}
+                    className={
+                      filter === category.category_key ? "active" : ""
+                    }
+                  >
+                    <input
+                      type="radio"
+                      name="category"
+                      value={category.category_key}
+                      checked={filter === category.category_key}
+                      onChange={(e) => setFilter(e.target.value)}
+                    />
+                    <span>{category.name}</span>
+                  </label>
+                ))}
               </div>
             </div>
 

@@ -46,6 +46,23 @@ const Header = () => {
 
   const [promoText, setPromoText] = useState("");
   const [promoActive, setPromoActive] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchCategories = async () => {
+      try {
+        const response = await apiClient.get("/categories");
+        if (mounted) setCategories(response.data || []);
+      } catch (err) {
+        console.error("Error fetching categories:", err?.message || err);
+      }
+    };
+    fetchCategories();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -151,12 +168,14 @@ const Header = () => {
         <nav className="main-nav">
           <Link to="/">Home</Link>
           <Link to="/products">All Products</Link>
-          <Link to="/products?category=Bundles">Bundles</Link>
-          <Link to="/products?category=Notebook">Journals</Link>
-          <Link to="/products?category=Notebooks">Notebooks</Link>
-          <Link to="/products?category=Cards">Cards</Link>
-          <Link to="/products?category=Bookmark">Bookmarks</Link>
-          <Link to="/products?category=Stickers">Stickers</Link>
+          {categories.map((category) => (
+            <Link
+              key={category.id}
+              to={`/products?category=${encodeURIComponent(category.category_key)}`}
+            >
+              {category.name}
+            </Link>
+          ))}
         </nav>
       </div>
     </header>

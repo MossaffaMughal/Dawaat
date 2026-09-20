@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import apiClient from "../utils/apiClient";
 import { compressImageFile } from "../utils/compressImage";
+import ConfirmDialog from "../components/ConfirmDialog";
 import "../styles/CategoryManagement.css";
 
 const API_BASE_URL = (
   process.env.REACT_APP_API_URL || "http://localhost:5000/api"
 ).replace(/\/api\/?$/, "");
+
+const EMPTY_FORM = { name: "", imageUrl: "" };
 
 const toFullImageUrl = (url) => {
   if (!url || /^https?:\/\//i.test(url)) return url;
@@ -20,8 +23,13 @@ const CategoryManagement = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [formData, setFormData] = useState({ name: "", imageUrl: "" });
+  const [isCreating, setIsCreating] = useState(false);
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const [message, setMessage] = useState("");
+  const [deleteDialog, setDeleteDialog] = useState({
+    isOpen: false,
+    category: null,
+  });
 
   const fetchCategories = async () => {
     try {
@@ -40,9 +48,22 @@ const CategoryManagement = () => {
   }, []);
 
   const openEditor = (category) => {
+    setIsCreating(false);
     setEditingCategory(category);
     setFormData({ name: category.name, imageUrl: category.image_url });
     setMessage("");
+  };
+
+  const openCreator = () => {
+    setIsCreating(true);
+    setEditingCategory(null);
+    setFormData(EMPTY_FORM);
+    setMessage("");
+  };
+
+  const closeForm = () => {
+    setIsCreating(false);
+    setEditingCategory(null);
   };
 
   const handleImageChange = async (event) => {
@@ -77,19 +98,30 @@ const CategoryManagement = () => {
     event.preventDefault();
     try {
       setSaving(true);
-      const response = await apiClient.put(
-        `/categories/${editingCategory.id}`,
-        formData,
-      );
-      setCategories((current) =>
-        current.map((category) =>
-          category.id === response.data.id ? response.data : category,
-        ),
-      );
-      setEditingCategory(null);
-      setMessage("Category updated successfully");
+      if (isCreating) {
+        const response = await apiClient.post("/categories", formData);
+        setCategories((current) => [...current, response.data]);
+        setMessage("Category created successfully");
+      } else {
+        const response = await apiClient.put(
+          `/categories/${editingCategory.id}`,
+          formData,
+        );
+        setCategories((current) =>
+          current.map((category) =>
+            category.id === response.data.id ? response.data : category,
+          ),
+        );
+        setMessage("Category updated successfully");
+      }
+      closeForm();
     } catch (error) {
-      setMessage(error.response?.data?.message || "Unable to update category");
+      setMessage(
+        error.response?.data?.message ||
+          (isCreating
+            ? "Unable to create category"
+            : "Unable to update category"),
+      );
     } finally {
       setSaving(false);
     }
@@ -119,13 +151,47 @@ const CategoryManagement = () => {
     }
   };
 
+  const requestDelete = (category) => {
+    setDeleteDialog({ isOpen: true, category });
+  };
+
+  const handleDeleteConfirmed = async () => {
+    const category = deleteDialog.category;
+    setDeleteDialog({ isOpen: false, category: null });
+    if (!category) return;
+
+    try {
+      await apiClient.delete(`/categories/${category.id}`);
+      setCategories((current) =>
+        current.filter((item) => item.id !== category.id),
+      );
+      setMessage("Category deleted successfully");
+    } catch (error) {
+      setMessage(error.response?.data?.message || "Unable to delete category");
+    }
+  };
+
+  const isFormOpen = isCreating || Boolean(editingCategory);
+
   return (
     <div className="admin-section category-management">
-      <h1>Categories</h1>
-      <p className="category-management-intro">
-        Manage the category names and cover images shown on the home page. Use
-        the arrows to change their order.
-      </p>
+      <div className="category-management-header">
+        <div>
+          <h1>Categories</h1>
+          <p className="category-management-intro">
+            Manage the category names and cover images shown on the home
+            page, site navigation, and products filter. Use the arrows to
+            change their order.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="submit-btn category-add-button"
+          onClick={openCreator}
+        >
+          + Add Category
+        </button>
+      </div>
 
       {message && <p className="category-management-message">{message}</p>}
       {loading ? (
@@ -169,16 +235,23 @@ const CategoryManagement = () => {
                 >
                   Edit
                 </button>
+                <button
+                  type="button"
+                  className="delete-btn category-delete-button"
+                  onClick={() => requestDelete(category)}
+                >
+                  Delete
+                </button>
               </div>
             </article>
           ))}
         </div>
       )}
 
-      {editingCategory && (
+      {isFormOpen && (
         <div className="category-editor-backdrop" role="presentation">
           <form className="category-editor" onSubmit={handleSave}>
-            <h2>Edit Category</h2>
+            <h2>{isCreating ? "Add Category" : "Edit Category"}</h2>
             <label>
               Home page name
               <input
@@ -213,18 +286,20 @@ const CategoryManagement = () => {
               <button
                 type="submit"
                 className="submit-btn"
-                disabled={saving || uploading}
+                disabled={saving || uploading || !formData.imageUrl}
               >
                 {uploading
                   ? "Uploading..."
                   : saving
                     ? "Saving..."
-                    : "Save changes"}
+                    : isCreating
+                      ? "Create category"
+                      : "Save changes"}
               </button>
               <button
                 type="button"
                 className="cancel-btn"
-                onClick={() => setEditingCategory(null)}
+                onClick={closeForm}
                 disabled={saving || uploading}
               >
                 Cancel
@@ -233,6 +308,16 @@ const CategoryManagement = () => {
           </form>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={deleteDialog.isOpen}
+        title="Delete Category"
+        message={`Are you sure you want to delete "${deleteDialog.category?.name}"? Products already assigned to it will keep their category value but it will no longer appear in navigation or filters.`}
+        isDangerous
+        confirmText="Delete"
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setDeleteDialog({ isOpen: false, category: null })}
+      />
     </div>
   );
 };
