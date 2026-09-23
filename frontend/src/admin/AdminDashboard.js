@@ -521,37 +521,28 @@ const AdminDashboard = () => {
     }
   };
 
-  const reorderCategoryProducts = async (
-    category,
-    draggedProductId,
-    targetIndex,
-  ) => {
-    const categoryProducts = [...(productsByCategory[category] || [])];
-    const reorderedCategoryProducts = buildReorderedCategoryProducts(
-      categoryProducts,
-      draggedProductId,
-      targetIndex,
-    );
-
-    if (reorderedCategoryProducts === categoryProducts) {
-      draggedProductRef.current = null;
-      setDraggingProductId(null);
-      return;
-    }
+  // handleDragOver / handleTouchMove already move the dragged product to its
+  // preview position in `products` as the pointer moves, so by the time a
+  // drop/touch-end fires, productsByCategory[category] already reflects the
+  // desired final order — just persist it as-is rather than recomputing the
+  // move a second time (which was a no-op against the already-moved array
+  // and silently skipped saving).
+  const commitReorder = async (category) => {
+    const categoryProducts = productsByCategory[category] || [];
 
     draggedProductRef.current = null;
     setDraggingProductId(null);
-    await persistProductOrder(category, reorderedCategoryProducts);
+    await persistProductOrder(category, categoryProducts);
     await fetchAdminData();
   };
 
-  const handleDrop = async (e, category, targetIndex) => {
+  const handleDrop = async (e, category) => {
     e.preventDefault();
     const dragged = draggedProductRef.current;
 
     if (!dragged || dragged.category !== category) return;
 
-    await reorderCategoryProducts(category, dragged.productId, targetIndex);
+    await commitReorder(category);
   };
 
   const handleTouchStart = (e, category, index, productId) => {
@@ -619,23 +610,13 @@ const AdminDashboard = () => {
       return;
     }
 
-    const rowRect = rowElement.getBoundingClientRect();
-    const dropIndex =
-      touch.clientY < rowRect.top + rowRect.height / 2
-        ? targetIndex
-        : targetIndex + 1;
-
     if (dragged.category !== targetCategory) {
       draggedProductRef.current = null;
       setDraggingProductId(null);
       return;
     }
 
-    await reorderCategoryProducts(
-      dragged.category,
-      dragged.productId,
-      dropIndex,
-    );
+    await commitReorder(dragged.category);
   };
 
   const handleDragEnd = () => {
