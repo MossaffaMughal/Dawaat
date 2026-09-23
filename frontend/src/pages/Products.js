@@ -10,7 +10,7 @@ import { normalizeCategory } from "../utils/pageType";
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState(
     () => searchParams.get("category") || "all",
   );
@@ -27,7 +27,26 @@ const Products = () => {
   );
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [refreshTick, setRefreshTick] = useState(0);
   const { addToCart } = useCart();
+
+  // Re-fetch whenever this tab becomes visible/focused again, so admin
+  // changes (like reordering products) show up without a manual reload.
+  useEffect(() => {
+    const handleRefresh = () => {
+      if (document.visibilityState === "visible") {
+        setRefreshTick((tick) => tick + 1);
+      }
+    };
+
+    window.addEventListener("focus", handleRefresh);
+    document.addEventListener("visibilitychange", handleRefresh);
+
+    return () => {
+      window.removeEventListener("focus", handleRefresh);
+      document.removeEventListener("visibilitychange", handleRefresh);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -40,7 +59,7 @@ const Products = () => {
     };
 
     fetchCategories();
-  }, []);
+  }, [refreshTick]);
 
   const matchesCategoryFilter = (productCategory, selectedCategory) => {
     if (selectedCategory === "all") return true;
@@ -161,7 +180,7 @@ const Products = () => {
     return () => {
       isStale = true;
     };
-  }, [filter, search, minPrice, maxPrice, sortBy]);
+  }, [filter, search, minPrice, maxPrice, sortBy, refreshTick]);
 
   const handleAddToCart = (product, quantity, variant) => {
     addToCart(product, quantity, variant);
@@ -169,8 +188,49 @@ const Products = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  // Keeps the current filter selections in the URL so a reload (or
+  // sharing/bookmarking the link) restores what was actually selected,
+  // instead of falling back to whatever category the user first arrived
+  // with from the navbar or home page.
+  const updateQueryParam = (key, value, isDefault) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (isDefault(value)) {
+          next.delete(key);
+        } else {
+          next.set(key, value);
+        }
+        return next;
+      },
+      { replace: true },
+    );
+  };
+
+  const handleCategoryChange = (value) => {
+    setFilter(value);
+    updateQueryParam("category", value, (v) => v === "all");
+  };
+
   const handleSearchChange = (e) => {
-    setSearch(e.target.value);
+    const value = e.target.value;
+    setSearch(value);
+    updateQueryParam("search", value, (v) => !v);
+  };
+
+  const handleMinPriceChange = (value) => {
+    setMinPrice(value);
+    updateQueryParam("minPrice", value, (v) => !v);
+  };
+
+  const handleMaxPriceChange = (value) => {
+    setMaxPrice(value);
+    updateQueryParam("maxPrice", value, (v) => !v);
+  };
+
+  const handleSortChange = (value) => {
+    setSortBy(value);
+    updateQueryParam("sortBy", value, (v) => v === "featured");
   };
 
   const handleClearFilters = () => {
@@ -179,6 +239,7 @@ const Products = () => {
     setMaxPrice("");
     setFilter("all");
     setSortBy("featured");
+    setSearchParams(new URLSearchParams(), { replace: true });
   };
 
   return (
@@ -239,7 +300,7 @@ const Products = () => {
                     name="category"
                     value="all"
                     checked={filter === "all"}
-                    onChange={(e) => setFilter(e.target.value)}
+                    onChange={(e) => handleCategoryChange(e.target.value)}
                   />
                   <span>All Products</span>
                 </label>
@@ -255,7 +316,7 @@ const Products = () => {
                       name="category"
                       value={category.category_key}
                       checked={filter === category.category_key}
-                      onChange={(e) => setFilter(e.target.value)}
+                      onChange={(e) => handleCategoryChange(e.target.value)}
                     />
                     <span>{category.name}</span>
                   </label>
@@ -270,7 +331,7 @@ const Products = () => {
                   type="number"
                   placeholder="Min price"
                   value={minPrice}
-                  onChange={(e) => setMinPrice(e.target.value)}
+                  onChange={(e) => handleMinPriceChange(e.target.value)}
                   className="price-input"
                 />
                 <span>-</span>
@@ -278,7 +339,7 @@ const Products = () => {
                   type="number"
                   placeholder="Max price"
                   value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value)}
+                  onChange={(e) => handleMaxPriceChange(e.target.value)}
                   className="price-input"
                 />
               </div>
@@ -288,7 +349,7 @@ const Products = () => {
               <h4>Sort By</h4>
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e) => handleSortChange(e.target.value)}
                 className="sort-select"
               >
                 <option value="featured">Featured</option>

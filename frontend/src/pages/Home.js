@@ -55,6 +55,26 @@ const Home = () => {
     fetchCategories();
   }, []);
 
+  // Re-fetch whenever this tab becomes visible/focused again, so admin
+  // changes (like reordering products or categories) show up without a
+  // manual reload.
+  useEffect(() => {
+    const handleRefresh = () => {
+      if (document.visibilityState === "visible") {
+        fetchProducts();
+        fetchCategories();
+      }
+    };
+
+    window.addEventListener("focus", handleRefresh);
+    document.addEventListener("visibilitychange", handleRefresh);
+
+    return () => {
+      window.removeEventListener("focus", handleRefresh);
+      document.removeEventListener("visibilitychange", handleRefresh);
+    };
+  }, []);
+
   const fetchProducts = async () => {
     try {
       const response = await apiClient.get("/products");
