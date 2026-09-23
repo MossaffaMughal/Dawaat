@@ -23,7 +23,7 @@ const Products = () => {
     () => searchParams.get("maxPrice") || "",
   );
   const [sortBy, setSortBy] = useState(
-    () => searchParams.get("sortBy") || "newest",
+    () => searchParams.get("sortBy") || "featured",
   );
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -74,7 +74,7 @@ const Products = () => {
     setSearch(searchParam || "");
     setMinPrice(minPriceParam || "");
     setMaxPrice(maxPriceParam || "");
-    setSortBy(sortByParam || "newest");
+    setSortBy(sortByParam || "featured");
   }, [searchParams]);
 
   useEffect(() => {
@@ -178,7 +178,7 @@ const Products = () => {
     setMinPrice("");
     setMaxPrice("");
     setFilter("all");
-    setSortBy("newest");
+    setSortBy("featured");
   };
 
   return (
@@ -291,6 +291,7 @@ const Products = () => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="sort-select"
               >
+                <option value="featured">Featured</option>
                 <option value="newest">Newest First</option>
                 <option value="price_asc">Price: Low to High</option>
                 <option value="price_desc">Price: High to Low</option>
