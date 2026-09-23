@@ -10,13 +10,21 @@ import { normalizeCategory } from "../utils/pageType";
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all");
-  const [notification, setNotification] = useState(null);
   const [searchParams] = useSearchParams();
-  const [search, setSearch] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
+  const [filter, setFilter] = useState(
+    () => searchParams.get("category") || "all",
+  );
+  const [notification, setNotification] = useState(null);
+  const [search, setSearch] = useState(() => searchParams.get("search") || "");
+  const [minPrice, setMinPrice] = useState(
+    () => searchParams.get("minPrice") || "",
+  );
+  const [maxPrice, setMaxPrice] = useState(
+    () => searchParams.get("maxPrice") || "",
+  );
+  const [sortBy, setSortBy] = useState(
+    () => searchParams.get("sortBy") || "newest",
+  );
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const { addToCart } = useCart();
@@ -93,11 +101,16 @@ const Products = () => {
   }, []);
 
   useEffect(() => {
+    let isStale = false;
+
     const fetchProducts = async () => {
       try {
         setLoading(true);
         const params = new URLSearchParams();
 
+        if (filter && filter !== "all") {
+          params.append("category", filter);
+        }
         if (search) {
           params.append("search", search);
         }
@@ -131,15 +144,23 @@ const Products = () => {
           matchesCategoryFilter(product.category, filter),
         );
 
-        setProducts(filteredProducts);
+        if (!isStale) {
+          setProducts(filteredProducts);
+        }
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
-        setLoading(false);
+        if (!isStale) {
+          setLoading(false);
+        }
       }
     };
 
     fetchProducts();
+
+    return () => {
+      isStale = true;
+    };
   }, [filter, search, minPrice, maxPrice, sortBy]);
 
   const handleAddToCart = (product, quantity, variant) => {
