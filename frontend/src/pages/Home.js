@@ -77,7 +77,7 @@ const Home = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await apiClient.get("/products");
+      const response = await apiClient.get("/products?sortBy=newest");
       setProducts(response.data);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -153,32 +153,14 @@ const Home = () => {
       </section>
 
       <section className="best-selling">
-        <h2>Our Products</h2>
+        <h2>Latest Products</h2>
 
         {loading ? (
           <p>Loading products...</p>
         ) : (
           <>
             <div className="products-grid">
-              {[
-                ...products
-                  .filter((p) =>
-                    String(p.category || "")
-                      .toLowerCase()
-                      .includes("notebook"),
-                  )
-                  .slice(0, 3),
-                ...products
-                  .filter((p) => p.category === "Bookmark")
-                  .slice(0, 3),
-                ...products
-                  .filter((p) => p.category === "Notebooks")
-                  .slice(0, 3),
-                ...products.filter((p) => p.category === "Cards").slice(0, 3),
-                ...products
-                  .filter((p) => p.category === "Stickers")
-                  .slice(0, 3),
-              ].map((product) => (
+              {products.slice(0, 12).map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
