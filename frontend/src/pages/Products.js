@@ -7,6 +7,51 @@ import ProductCard from "../components/ProductCard";
 import HomeReviewsSection from "../components/HomeReviewsSection";
 import { normalizeCategory } from "../utils/pageType";
 
+const CATEGORY_CHUNK_SIZE = 4;
+
+// Interleaves products so the "All Products" view shows a few items from
+// each category (in categoryOrder, i.e. the same order as the home page
+// category tiles) before moving to the next, looping back through the
+// categories until every product has been placed.
+const buildCategoryInterleavedOrder = (items, categoryOrder, chunkSize) => {
+  const buckets = new Map();
+
+  items.forEach((item) => {
+    const key = item.category || "Uncategorized";
+    if (!buckets.has(key)) {
+      buckets.set(key, []);
+    }
+    buckets.get(key).push(item);
+  });
+
+  const orderedKeys = [
+    ...categoryOrder.filter((key) => buckets.has(key)),
+    ...[...buckets.keys()].filter((key) => !categoryOrder.includes(key)),
+  ];
+
+  const cursors = new Map(orderedKeys.map((key) => [key, 0]));
+  const result = [];
+  let remaining = items.length;
+
+  while (remaining > 0) {
+    let progressed = false;
+    for (const key of orderedKeys) {
+      const bucket = buckets.get(key);
+      const cursor = cursors.get(key);
+      if (cursor >= bucket.length) continue;
+
+      const nextChunk = bucket.slice(cursor, cursor + chunkSize);
+      result.push(...nextChunk);
+      cursors.set(key, cursor + nextChunk.length);
+      remaining -= nextChunk.length;
+      progressed = true;
+    }
+    if (!progressed) break;
+  }
+
+  return result;
+};
+
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -181,6 +226,15 @@ const Products = () => {
       isStale = true;
     };
   }, [filter, search, minPrice, maxPrice, sortBy, refreshTick]);
+
+  const displayProducts =
+    filter === "all" && sortBy === "featured"
+      ? buildCategoryInterleavedOrder(
+          products,
+          categories.map((category) => category.category_key),
+          CATEGORY_CHUNK_SIZE,
+        )
+      : products;
 
   const handleAddToCart = (product, quantity, variant) => {
     addToCart(product, quantity, variant);
@@ -393,7 +447,7 @@ const Products = () => {
             </div>
           ) : (
             <div className="products-grid">
-              {products.map((product) => (
+              {displayProducts.map((product) => (
                 <div key={product.id} className="product-item">
                   <ProductCard
                     product={product}
