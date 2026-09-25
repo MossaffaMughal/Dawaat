@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import apiClient from "../utils/apiClient";
 import { useCart } from "../context/CartContext";
 import { useSearchParams } from "react-router-dom";
@@ -73,13 +73,17 @@ const Products = () => {
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [refreshTick, setRefreshTick] = useState(0);
+  const isBackgroundRefreshRef = useRef(false);
   const { addToCart } = useCart();
 
   // Re-fetch whenever this tab becomes visible/focused again, so admin
   // changes (like reordering products) show up without a manual reload.
+  // Marked as a background refresh so it doesn't flash the loading spinner
+  // and swap out the whole grid every time the tab regains focus.
   useEffect(() => {
     const handleRefresh = () => {
       if (document.visibilityState === "visible") {
+        isBackgroundRefreshRef.current = true;
         setRefreshTick((tick) => tick + 1);
       }
     };
@@ -166,10 +170,14 @@ const Products = () => {
 
   useEffect(() => {
     let isStale = false;
+    const isBackground = isBackgroundRefreshRef.current;
+    isBackgroundRefreshRef.current = false;
 
     const fetchProducts = async () => {
       try {
-        setLoading(true);
+        if (!isBackground) {
+          setLoading(true);
+        }
         const params = new URLSearchParams();
 
         if (filter && filter !== "all") {
@@ -214,7 +222,7 @@ const Products = () => {
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
-        if (!isStale) {
+        if (!isStale && !isBackground) {
           setLoading(false);
         }
       }
