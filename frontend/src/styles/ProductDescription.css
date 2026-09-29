@@ -95,6 +95,13 @@
   gap: 20px;
 }
 
+.low-stock-notice {
+  margin: 10px 0 0;
+  color: #c0392b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .original-price {
   color: #999;
   text-decoration: line-through;

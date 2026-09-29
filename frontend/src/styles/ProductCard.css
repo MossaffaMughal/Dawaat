@@ -143,6 +143,13 @@
   align-items: center;
 }
 
+.low-stock-badge {
+  margin: -8px 0 12px;
+  color: #c0392b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .price {
   color: var(--primary-color);
   font-weight: 700;

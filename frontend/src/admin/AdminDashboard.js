@@ -33,7 +33,7 @@ const AdminDashboard = () => {
     price: "",
     sale_price: "",
     category: "Notebook",
-    in_stock: true,
+    stock_quantity: "0",
     plain_pages_in_stock: true,
     dotted_pages_in_stock: true,
     lined_pages_in_stock: true,
@@ -760,7 +760,7 @@ const AdminDashboard = () => {
           ? String(product.sale_price)
           : "",
       category: product.category,
-      in_stock: product.in_stock ?? true,
+      stock_quantity: String(product.stock_quantity ?? 0),
       plain_pages_in_stock: product.plain_pages_in_stock ?? true,
       dotted_pages_in_stock: product.dotted_pages_in_stock ?? true,
       lined_pages_in_stock: product.lined_pages_in_stock ?? true,
@@ -843,7 +843,7 @@ const AdminDashboard = () => {
       price: "",
       sale_price: "",
       category: "Notebook",
-      in_stock: true,
+      stock_quantity: "0",
       plain_pages_in_stock: true,
       dotted_pages_in_stock: true,
       lined_pages_in_stock: true,
@@ -1137,20 +1137,20 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="in_stock"
-                      checked={productFormData.in_stock}
-                      onChange={(e) =>
-                        setProductFormData((prev) => ({
-                          ...prev,
-                          in_stock: e.target.checked,
-                        }))
-                      }
-                    />
-                    In Stock
-                  </label>
+                  <label>Stock Quantity</label>
+                  <input
+                    type="number"
+                    name="stock_quantity"
+                    min="0"
+                    step="1"
+                    value={productFormData.stock_quantity}
+                    onChange={handleProductInputChange}
+                    required
+                  />
+                  <small>
+                    Number of units available. Set to 0 to mark as out of
+                    stock.
+                  </small>
                 </div>
 
                 {(() => {
@@ -1403,7 +1403,7 @@ const AdminDashboard = () => {
                                     <span>
                                       Stock:{" "}
                                       {product.in_stock
-                                        ? "In stock"
+                                        ? `${product.stock_quantity} in stock`
                                         : "Out of stock"}
                                     </span>
                                   </div>

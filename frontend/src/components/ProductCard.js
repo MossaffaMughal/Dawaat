@@ -20,6 +20,11 @@ const ProductCard = ({ product, onAddToCart }) => {
   const currentPrice =
     product.current_price ?? product.sale_price ?? product.price;
   const pageTypeConfig = getPageTypeConfig(product.category);
+  const isLowStock =
+    product.in_stock &&
+    product.stock_quantity !== undefined &&
+    product.stock_quantity !== null &&
+    product.stock_quantity <= 3;
 
   useEffect(() => {
     if (product.images && product.images.length > 0) {
@@ -87,6 +92,12 @@ const ProductCard = ({ product, onAddToCart }) => {
                 <span className="price">Rs. {currentPrice}</span>
               )}
             </div>
+
+            {isLowStock && (
+              <p className="low-stock-badge">
+                Only {product.stock_quantity} left in stock
+              </p>
+            )}
           </div>
         </div>
       </Link>

@@ -121,7 +121,7 @@ export const createProduct = async (req, res) => {
       price,
       sale_price,
       category,
-      in_stock,
+      stock_quantity,
       plain_pages_in_stock,
       lined_pages_in_stock,
       dotted_pages_in_stock,
@@ -145,6 +145,19 @@ export const createProduct = async (req, res) => {
     }
     console.log("[createProduct] Parsed price:", price, "Type:", typeof price);
 
+    // Stock quantity is the source of truth for in_stock: 0 units means
+    // out of stock, any positive count means it's available for purchase.
+    stock_quantity =
+      stock_quantity !== undefined && stock_quantity !== ""
+        ? parseInt(stock_quantity, 10)
+        : 0;
+    if (isNaN(stock_quantity) || stock_quantity < 0) {
+      return res
+        .status(400)
+        .json({ error: "Stock quantity must be a non-negative number" });
+    }
+    const inStock = stock_quantity > 0;
+
     // Determine next sort_order for this category so new products append to the end
     let sortOrder = 0;
     if (category) {
@@ -156,14 +169,15 @@ export const createProduct = async (req, res) => {
     }
 
     const result = await pool.query(
-      "INSERT INTO products (name, description, price, sale_price, category, in_stock, plain_pages_in_stock, lined_pages_in_stock, dotted_pages_in_stock, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
+      "INSERT INTO products (name, description, price, sale_price, category, in_stock, stock_quantity, plain_pages_in_stock, lined_pages_in_stock, dotted_pages_in_stock, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *",
       [
         name,
         description,
         price,
         sale_price,
         category,
-        in_stock !== false,
+        inStock,
+        stock_quantity,
         plain_pages_in_stock !== false,
         lined_pages_in_stock !== false,
         dotted_pages_in_stock !== false,
@@ -193,6 +207,7 @@ export const updateProduct = async (req, res) => {
       sale_price,
       category,
       in_stock,
+      stock_quantity,
       plain_pages_in_stock,
       lined_pages_in_stock,
       dotted_pages_in_stock,
@@ -227,6 +242,21 @@ export const updateProduct = async (req, res) => {
       }
     }
 
+    // Stock quantity is the source of truth for in_stock whenever it's
+    // included in the update: 0 units means out of stock, any positive
+    // count means it's available. A plain in_stock toggle (no quantity in
+    // the payload) still works on its own for a quick pause/resume without
+    // touching the counted quantity.
+    if (stock_quantity !== undefined) {
+      stock_quantity =
+        stock_quantity === "" ? 0 : parseInt(stock_quantity, 10);
+      if (isNaN(stock_quantity) || stock_quantity < 0) {
+        return res
+          .status(400)
+          .json({ error: "Stock quantity must be a non-negative number" });
+      }
+    }
+
     // Build dynamic update query for partial updates
     const updates = [];
     const values = [];
@@ -257,7 +287,14 @@ export const updateProduct = async (req, res) => {
       values.push(category);
       paramCount++;
     }
-    if (in_stock !== undefined) {
+    if (stock_quantity !== undefined) {
+      updates.push(`stock_quantity = $${paramCount}`);
+      values.push(stock_quantity);
+      paramCount++;
+      updates.push(`in_stock = $${paramCount}`);
+      values.push(stock_quantity > 0);
+      paramCount++;
+    } else if (in_stock !== undefined) {
       updates.push(`in_stock = $${paramCount}`);
       values.push(in_stock !== false);
       paramCount++;

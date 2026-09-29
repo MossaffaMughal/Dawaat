@@ -37,6 +37,11 @@ const ProductDescription = () => {
     () => getAvailablePageTypeVariant(product?.category, product),
     [product],
   );
+  const isLowStock =
+    product?.in_stock &&
+    product?.stock_quantity !== undefined &&
+    product?.stock_quantity !== null &&
+    product.stock_quantity <= 3;
 
   useEffect(() => {
     if (pageTypeConfig) {
@@ -145,22 +150,45 @@ const ProductDescription = () => {
             )}
           </div>
 
+          {isLowStock && (
+            <p className="low-stock-notice">
+              Only {product.stock_quantity} left in stock
+            </p>
+          )}
+
           <p className="description">{product.description}</p>
 
           <div className="quantity-selector">
             <label>Quantity:</label>
             <div className="quantity-input">
-              <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>
+              <button
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              >
                 −
               </button>
               <input
                 type="number"
                 value={quantity}
-                onChange={(e) =>
-                  setQuantity(Math.max(1, parseInt(e.target.value) || 1))
-                }
+                onChange={(e) => {
+                  const nextValue = Math.max(1, parseInt(e.target.value) || 1);
+                  setQuantity(
+                    product.stock_quantity
+                      ? Math.min(nextValue, product.stock_quantity)
+                      : nextValue,
+                  );
+                }}
               />
-              <button onClick={() => setQuantity(quantity + 1)}>+</button>
+              <button
+                onClick={() =>
+                  setQuantity((prev) =>
+                    product.stock_quantity
+                      ? Math.min(prev + 1, product.stock_quantity)
+                      : prev + 1,
+                  )
+                }
+              >
+                +
+              </button>
             </div>
           </div>
 

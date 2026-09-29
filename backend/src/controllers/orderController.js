@@ -135,6 +135,33 @@ export const createOrder = async (req, res) => {
 
     // Add order items
     for (const item of items) {
+      // Lock the product row so concurrent orders can't both oversell the
+      // same stock, then verify there's enough left before committing.
+      const productResult = await client.query(
+        "SELECT name, stock_quantity FROM products WHERE id = $1 FOR UPDATE",
+        [item.productId],
+      );
+
+      if (productResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          message: `Product not found: ${item.productName || item.productId}`,
+        });
+      }
+
+      const { name: productName, stock_quantity: currentStock } =
+        productResult.rows[0];
+
+      if (currentStock < item.quantity) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          message:
+            currentStock > 0
+              ? `Only ${currentStock} of "${productName}" left in stock`
+              : `"${productName}" is out of stock`,
+        });
+      }
+
       await client.query(
         `INSERT INTO order_items (order_id, product_id, product_name, quantity, price, variant)
          VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -148,10 +175,11 @@ export const createOrder = async (req, res) => {
         ],
       );
 
-      // Update product stock
+      // Update product stock and keep in_stock in sync
+      const newStock = currentStock - item.quantity;
       await client.query(
-        "UPDATE products SET stock_quantity = stock_quantity - $1 WHERE id = $2",
-        [item.quantity, item.productId],
+        "UPDATE products SET stock_quantity = $1, in_stock = $2 WHERE id = $3",
+        [newStock, newStock > 0, item.productId],
       );
     }
 
