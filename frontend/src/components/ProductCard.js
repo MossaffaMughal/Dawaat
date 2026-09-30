@@ -6,6 +6,7 @@ import {
   getAvailablePageTypeVariant,
   getPageTypeConfig,
   getVariantStock,
+  getStockNotice,
 } from "../utils/pageType";
 import "../styles/ProductCard.css";
 
@@ -21,11 +22,7 @@ const ProductCard = ({ product, onAddToCart }) => {
   const currentPrice =
     product.current_price ?? product.sale_price ?? product.price;
   const pageTypeConfig = getPageTypeConfig(product.category);
-  const isLowStock =
-    product.in_stock &&
-    product.stock_quantity !== undefined &&
-    product.stock_quantity !== null &&
-    product.stock_quantity <= 3;
+  const stockNotice = getStockNotice(product);
 
   useEffect(() => {
     if (product.images && product.images.length > 0) {
@@ -94,9 +91,11 @@ const ProductCard = ({ product, onAddToCart }) => {
               )}
             </div>
 
-            {isLowStock && (
+            {stockNotice && (
               <p className="low-stock-badge">
-                Only {product.stock_quantity} left in stock
+                {stockNotice.type === "critical"
+                  ? `Only ${stockNotice.count} left in stock`
+                  : "Low on stock"}
               </p>
             )}
           </div>

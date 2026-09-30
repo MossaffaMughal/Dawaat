@@ -76,3 +76,37 @@ export const getAvailablePageTypeVariant = (category, product) => {
 
   return availableOption?.variant ?? pageTypeConfig.defaultVariant;
 };
+
+const LOW_STOCK_THRESHOLD = 3;
+
+// What (if anything) to tell the customer about overall stock for this
+// product, shown near the price/title rather than next to a single variant
+// option. For page-type products, product.stock_quantity is always the sum
+// of the variant columns (kept in sync server-side), so:
+//   - total <= 3 units left  -> the exact count ("Only X left in stock")
+//   - total is healthy but one variant is individually low -> a generic
+//     "Low on stock" nudge, since the specific low variant is already
+//     called out next to its own option
+export const getStockNotice = (product) => {
+  if (!product?.in_stock) return null;
+
+  const totalStock = product?.stock_quantity;
+  if (totalStock !== undefined && totalStock !== null) {
+    if (totalStock <= LOW_STOCK_THRESHOLD) {
+      return { type: "critical", count: totalStock };
+    }
+  }
+
+  const pageTypeConfig = getPageTypeConfig(product?.category);
+  if (pageTypeConfig) {
+    const anyVariantLow = pageTypeConfig.options.some((option) => {
+      const stock = getVariantStock(product, option);
+      return stock > 0 && stock <= LOW_STOCK_THRESHOLD;
+    });
+    if (anyVariantLow) {
+      return { type: "low" };
+    }
+  }
+
+  return null;
+};

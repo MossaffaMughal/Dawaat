@@ -9,6 +9,7 @@ import {
   getAvailablePageTypeVariant,
   getPageTypeConfig,
   getVariantStock,
+  getStockNotice,
 } from "../utils/pageType";
 
 const ProductDescription = () => {
@@ -46,11 +47,11 @@ const ProductDescription = () => {
   const availableStock = selectedVariantOption
     ? getVariantStock(product, selectedVariantOption)
     : product?.stock_quantity;
-  const isLowStock =
-    product?.in_stock &&
-    availableStock !== undefined &&
-    availableStock !== null &&
-    availableStock <= 3;
+  // Distinct from availableStock (which caps how many of the *selected*
+  // variant can be bought): this reflects the product as a whole, so it
+  // doesn't misreport a healthy total as critically low just because the
+  // currently selected variant happens to be the scarcer one.
+  const stockNotice = getStockNotice(product);
 
   // If switching page types lands on a variant with less stock than the
   // currently selected quantity, clamp it down instead of letting the
@@ -168,9 +169,11 @@ const ProductDescription = () => {
             )}
           </div>
 
-          {isLowStock && (
+          {stockNotice && (
             <p className="low-stock-notice">
-              Only {availableStock} left in stock
+              {stockNotice.type === "critical"
+                ? `Only ${stockNotice.count} left in stock`
+                : "Low on stock"}
             </p>
           )}
 
