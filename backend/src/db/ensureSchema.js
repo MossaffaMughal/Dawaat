@@ -86,6 +86,26 @@ export const ensureDatabaseSchema = async () => {
     WHERE dotted_pages_in_stock = false AND dotted_pages_stock_quantity = 999;
   `);
 
+  // Keep the overall stock_quantity/in_stock in sync with the sum of the
+  // relevant variant columns for these two categories. Safe to run on every
+  // startup: it only re-derives a cached total from its real source columns.
+  await pool.query(`
+    UPDATE products
+    SET stock_quantity = COALESCE(plain_pages_stock_quantity, 0)
+                        + COALESCE(lined_pages_stock_quantity, 0),
+        in_stock = (COALESCE(plain_pages_stock_quantity, 0)
+                    + COALESCE(lined_pages_stock_quantity, 0)) > 0
+    WHERE LOWER(TRIM(category)) = 'notebook';
+  `);
+  await pool.query(`
+    UPDATE products
+    SET stock_quantity = COALESCE(dotted_pages_stock_quantity, 0)
+                        + COALESCE(lined_pages_stock_quantity, 0),
+        in_stock = (COALESCE(dotted_pages_stock_quantity, 0)
+                    + COALESCE(lined_pages_stock_quantity, 0)) > 0
+    WHERE LOWER(TRIM(category)) = 'notebooks';
+  `);
+
   await pool.query(`
     ALTER TABLE products
     ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
