@@ -367,6 +367,13 @@
   margin-left: 4px;
 }
 
+.low-stock-inline {
+  font-size: 12px;
+  color: #c0392b;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
 /* Modal Buttons */
 .modal-buttons {
   display: flex;

@@ -8,6 +8,7 @@ import ReviewsList from "../components/ReviewsList";
 import {
   getAvailablePageTypeVariant,
   getPageTypeConfig,
+  getVariantStock,
 } from "../utils/pageType";
 
 const ProductDescription = () => {
@@ -37,11 +38,28 @@ const ProductDescription = () => {
     () => getAvailablePageTypeVariant(product?.category, product),
     [product],
   );
+  // For products with page-type variants, availability/quantity tracks the
+  // currently selected variant's own stock rather than the product total.
+  const selectedVariantOption = pageTypeConfig?.options?.find(
+    (option) => option.variant === selectedVariant,
+  );
+  const availableStock = selectedVariantOption
+    ? getVariantStock(product, selectedVariantOption)
+    : product?.stock_quantity;
   const isLowStock =
     product?.in_stock &&
-    product?.stock_quantity !== undefined &&
-    product?.stock_quantity !== null &&
-    product.stock_quantity <= 3;
+    availableStock !== undefined &&
+    availableStock !== null &&
+    availableStock <= 3;
+
+  // If switching page types lands on a variant with less stock than the
+  // currently selected quantity, clamp it down instead of letting the
+  // customer submit an order for more than what's available.
+  useEffect(() => {
+    if (availableStock) {
+      setQuantity((prev) => Math.min(prev, availableStock));
+    }
+  }, [availableStock]);
 
   useEffect(() => {
     if (pageTypeConfig) {
@@ -152,7 +170,7 @@ const ProductDescription = () => {
 
           {isLowStock && (
             <p className="low-stock-notice">
-              Only {product.stock_quantity} left in stock
+              Only {availableStock} left in stock
             </p>
           )}
 
@@ -172,8 +190,8 @@ const ProductDescription = () => {
                 onChange={(e) => {
                   const nextValue = Math.max(1, parseInt(e.target.value) || 1);
                   setQuantity(
-                    product.stock_quantity
-                      ? Math.min(nextValue, product.stock_quantity)
+                    availableStock
+                      ? Math.min(nextValue, availableStock)
                       : nextValue,
                   );
                 }}
@@ -181,9 +199,7 @@ const ProductDescription = () => {
               <button
                 onClick={() =>
                   setQuantity((prev) =>
-                    product.stock_quantity
-                      ? Math.min(prev + 1, product.stock_quantity)
-                      : prev + 1,
+                    availableStock ? Math.min(prev + 1, availableStock) : prev + 1,
                   )
                 }
               >
@@ -197,7 +213,8 @@ const ProductDescription = () => {
               <label className="selector-label">Choose Page Type:</label>
               <div className="page-options">
                 {pageTypeConfig.options.map((option) => {
-                  const isInStock = product?.[option.stockField] ?? true;
+                  const variantStock = getVariantStock(product, option);
+                  const isInStock = variantStock > 0;
 
                   return (
                     <button
@@ -219,8 +236,14 @@ const ProductDescription = () => {
                             : "≡"}
                       </span>
                       <span className="option-text">{option.label}</span>
-                      {!isInStock && (
+                      {!isInStock ? (
                         <span className="out-of-stock-label">Out of Stock</span>
+                      ) : (
+                        variantStock <= 3 && (
+                          <span className="low-stock-label">
+                            Only {variantStock} left
+                          </span>
+                        )
                       )}
                     </button>
                   );

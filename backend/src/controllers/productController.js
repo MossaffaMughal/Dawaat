@@ -112,6 +112,27 @@ export const getProductById = async (req, res) => {
   }
 };
 
+// Products in these categories are stocked per page-type variant instead of
+// as a single count. The overall stock_quantity/in_stock columns are kept in
+// sync as the sum of the relevant variant columns so the rest of the app
+// (listings, cart gating, "X in stock" displays) keeps working unmodified.
+const PAGE_TYPE_VARIANT_COLUMNS = {
+  notebook: ["plain_pages_stock_quantity", "lined_pages_stock_quantity"],
+  notebooks: ["dotted_pages_stock_quantity", "lined_pages_stock_quantity"],
+};
+
+const getVariantColumnsForCategory = (category) =>
+  PAGE_TYPE_VARIANT_COLUMNS[String(category || "").trim().toLowerCase()] ||
+  null;
+
+// Returns a non-negative integer, `fallback` if the value is missing/empty,
+// or null if the value is present but invalid.
+const parseNonNegativeInt = (value, fallback) => {
+  if (value === undefined || value === "") return fallback;
+  const parsed = parseInt(value, 10);
+  return Number.isNaN(parsed) || parsed < 0 ? null : parsed;
+};
+
 export const createProduct = async (req, res) => {
   try {
     console.log("[createProduct] Raw request body:", req.body);
@@ -122,9 +143,9 @@ export const createProduct = async (req, res) => {
       sale_price,
       category,
       stock_quantity,
-      plain_pages_in_stock,
-      lined_pages_in_stock,
-      dotted_pages_in_stock,
+      plain_pages_stock_quantity,
+      lined_pages_stock_quantity,
+      dotted_pages_stock_quantity,
     } = req.body;
 
     // Ensure price is a number
@@ -147,14 +168,49 @@ export const createProduct = async (req, res) => {
 
     // Stock quantity is the source of truth for in_stock: 0 units means
     // out of stock, any positive count means it's available for purchase.
-    stock_quantity =
-      stock_quantity !== undefined && stock_quantity !== ""
-        ? parseInt(stock_quantity, 10)
-        : 0;
-    if (isNaN(stock_quantity) || stock_quantity < 0) {
-      return res
-        .status(400)
-        .json({ error: "Stock quantity must be a non-negative number" });
+    // Categories with page-type variants (Notebook/Notebooks) are stocked
+    // per variant instead, and the overall quantity is their sum.
+    const variantColumns = getVariantColumnsForCategory(category);
+    let plainStock = 0;
+    let linedStock = 0;
+    let dottedStock = 0;
+
+    if (variantColumns) {
+      const parsedValues = {
+        plain_pages_stock_quantity: parseNonNegativeInt(
+          plain_pages_stock_quantity,
+          0,
+        ),
+        lined_pages_stock_quantity: parseNonNegativeInt(
+          lined_pages_stock_quantity,
+          0,
+        ),
+        dotted_pages_stock_quantity: parseNonNegativeInt(
+          dotted_pages_stock_quantity,
+          0,
+        ),
+      };
+      for (const column of variantColumns) {
+        if (parsedValues[column] === null) {
+          return res.status(400).json({
+            error: `${column.replace(/_/g, " ")} must be a non-negative number`,
+          });
+        }
+      }
+      plainStock = parsedValues.plain_pages_stock_quantity;
+      linedStock = parsedValues.lined_pages_stock_quantity;
+      dottedStock = parsedValues.dotted_pages_stock_quantity;
+      stock_quantity = variantColumns.reduce(
+        (sum, column) => sum + parsedValues[column],
+        0,
+      );
+    } else {
+      stock_quantity = parseNonNegativeInt(stock_quantity, 0);
+      if (stock_quantity === null) {
+        return res
+          .status(400)
+          .json({ error: "Stock quantity must be a non-negative number" });
+      }
     }
     const inStock = stock_quantity > 0;
 
@@ -169,7 +225,7 @@ export const createProduct = async (req, res) => {
     }
 
     const result = await pool.query(
-      "INSERT INTO products (name, description, price, sale_price, category, in_stock, stock_quantity, plain_pages_in_stock, lined_pages_in_stock, dotted_pages_in_stock, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *",
+      "INSERT INTO products (name, description, price, sale_price, category, in_stock, stock_quantity, plain_pages_stock_quantity, lined_pages_stock_quantity, dotted_pages_stock_quantity, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *",
       [
         name,
         description,
@@ -178,9 +234,9 @@ export const createProduct = async (req, res) => {
         category,
         inStock,
         stock_quantity,
-        plain_pages_in_stock !== false,
-        lined_pages_in_stock !== false,
-        dotted_pages_in_stock !== false,
+        plainStock,
+        linedStock,
+        dottedStock,
         sortOrder,
       ],
     );
@@ -208,9 +264,9 @@ export const updateProduct = async (req, res) => {
       category,
       in_stock,
       stock_quantity,
-      plain_pages_in_stock,
-      lined_pages_in_stock,
-      dotted_pages_in_stock,
+      plain_pages_stock_quantity,
+      lined_pages_stock_quantity,
+      dotted_pages_stock_quantity,
     } = req.body;
 
     console.log("[updateProduct] Raw request body:", req.body);
@@ -242,19 +298,79 @@ export const updateProduct = async (req, res) => {
       }
     }
 
-    // Stock quantity is the source of truth for in_stock whenever it's
-    // included in the update: 0 units means out of stock, any positive
-    // count means it's available. A plain in_stock toggle (no quantity in
-    // the payload) still works on its own for a quick pause/resume without
-    // touching the counted quantity.
-    if (stock_quantity !== undefined) {
-      stock_quantity =
-        stock_quantity === "" ? 0 : parseInt(stock_quantity, 10);
-      if (isNaN(stock_quantity) || stock_quantity < 0) {
+    // Stock quantity (overall or per page-type variant) is the source of
+    // truth for in_stock whenever any of it is included in the update. A
+    // plain in_stock toggle with none of these fields still works on its
+    // own for a quick pause/resume without touching the counted quantity.
+    const touchesStock =
+      stock_quantity !== undefined ||
+      plain_pages_stock_quantity !== undefined ||
+      lined_pages_stock_quantity !== undefined ||
+      dotted_pages_stock_quantity !== undefined;
+
+    let computedStockQuantity;
+    let computedInStock;
+    let computedPlainStock;
+    let computedLinedStock;
+    let computedDottedStock;
+
+    if (touchesStock) {
+      const currentRes = await pool.query(
+        "SELECT category, stock_quantity, plain_pages_stock_quantity, lined_pages_stock_quantity, dotted_pages_stock_quantity FROM products WHERE id = $1",
+        [id],
+      );
+      if (currentRes.rows.length === 0) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      const current = currentRes.rows[0];
+      const effectiveCategory =
+        category !== undefined ? category : current.category;
+      const variantColumns = getVariantColumnsForCategory(effectiveCategory);
+
+      computedPlainStock = parseNonNegativeInt(
+        plain_pages_stock_quantity,
+        current.plain_pages_stock_quantity,
+      );
+      computedLinedStock = parseNonNegativeInt(
+        lined_pages_stock_quantity,
+        current.lined_pages_stock_quantity,
+      );
+      computedDottedStock = parseNonNegativeInt(
+        dotted_pages_stock_quantity,
+        current.dotted_pages_stock_quantity,
+      );
+
+      if (
+        [computedPlainStock, computedLinedStock, computedDottedStock].some(
+          (value) => value === null,
+        )
+      ) {
         return res
           .status(400)
-          .json({ error: "Stock quantity must be a non-negative number" });
+          .json({ error: "Stock quantities must be non-negative numbers" });
       }
+
+      if (variantColumns) {
+        const values = {
+          plain_pages_stock_quantity: computedPlainStock,
+          lined_pages_stock_quantity: computedLinedStock,
+          dotted_pages_stock_quantity: computedDottedStock,
+        };
+        computedStockQuantity = variantColumns.reduce(
+          (sum, column) => sum + values[column],
+          0,
+        );
+      } else if (stock_quantity !== undefined) {
+        computedStockQuantity = parseNonNegativeInt(stock_quantity, null);
+        if (computedStockQuantity === null) {
+          return res
+            .status(400)
+            .json({ error: "Stock quantity must be a non-negative number" });
+        }
+      } else {
+        computedStockQuantity = current.stock_quantity;
+      }
+      computedInStock = computedStockQuantity > 0;
     }
 
     // Build dynamic update query for partial updates
@@ -287,31 +403,25 @@ export const updateProduct = async (req, res) => {
       values.push(category);
       paramCount++;
     }
-    if (stock_quantity !== undefined) {
+    if (touchesStock) {
       updates.push(`stock_quantity = $${paramCount}`);
-      values.push(stock_quantity);
+      values.push(computedStockQuantity);
       paramCount++;
       updates.push(`in_stock = $${paramCount}`);
-      values.push(stock_quantity > 0);
+      values.push(computedInStock);
+      paramCount++;
+      updates.push(`plain_pages_stock_quantity = $${paramCount}`);
+      values.push(computedPlainStock);
+      paramCount++;
+      updates.push(`lined_pages_stock_quantity = $${paramCount}`);
+      values.push(computedLinedStock);
+      paramCount++;
+      updates.push(`dotted_pages_stock_quantity = $${paramCount}`);
+      values.push(computedDottedStock);
       paramCount++;
     } else if (in_stock !== undefined) {
       updates.push(`in_stock = $${paramCount}`);
       values.push(in_stock !== false);
-      paramCount++;
-    }
-    if (plain_pages_in_stock !== undefined) {
-      updates.push(`plain_pages_in_stock = $${paramCount}`);
-      values.push(plain_pages_in_stock !== false);
-      paramCount++;
-    }
-    if (lined_pages_in_stock !== undefined) {
-      updates.push(`lined_pages_in_stock = $${paramCount}`);
-      values.push(lined_pages_in_stock !== false);
-      paramCount++;
-    }
-    if (dotted_pages_in_stock !== undefined) {
-      updates.push(`dotted_pages_in_stock = $${paramCount}`);
-      values.push(dotted_pages_in_stock !== false);
       paramCount++;
     }
     if (req.body.sort_order !== undefined) {

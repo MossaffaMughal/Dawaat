@@ -14,14 +14,14 @@ export const getPageTypeConfig = (category) => {
           variant: "plain",
           label: "Plain Pages",
           shortLabel: "Plain",
-          stockField: "plain_pages_in_stock",
+          stockField: "plain_pages_stock_quantity",
           outOfStockMessage: "Plain pages are out of stock",
         },
         {
           variant: "lined",
           label: "Lined Pages",
           shortLabel: "Lined",
-          stockField: "lined_pages_in_stock",
+          stockField: "lined_pages_stock_quantity",
           outOfStockMessage: "Lined pages are out of stock",
         },
       ],
@@ -37,14 +37,14 @@ export const getPageTypeConfig = (category) => {
           variant: "dotted",
           label: "Dotted Pages",
           shortLabel: "Dotted",
-          stockField: "dotted_pages_in_stock",
+          stockField: "dotted_pages_stock_quantity",
           outOfStockMessage: "Dotted pages are out of stock",
         },
         {
           variant: "lined",
           label: "Lined Pages",
           shortLabel: "Lined",
-          stockField: "lined_pages_in_stock",
+          stockField: "lined_pages_stock_quantity",
           outOfStockMessage: "Lined pages are out of stock",
         },
       ],
@@ -55,6 +55,14 @@ export const getPageTypeConfig = (category) => {
   return null;
 };
 
+// Number of units left for a given page-type option. Missing/undefined
+// values are treated as available (999) so products created before this
+// per-variant tracking existed don't suddenly look out of stock.
+export const getVariantStock = (product, option) => {
+  const value = product?.[option.stockField];
+  return value === undefined || value === null ? 999 : Number(value);
+};
+
 export const getAvailablePageTypeVariant = (category, product) => {
   const pageTypeConfig = getPageTypeConfig(category);
 
@@ -63,7 +71,7 @@ export const getAvailablePageTypeVariant = (category, product) => {
   }
 
   const availableOption = pageTypeConfig.options.find(
-    (option) => product?.[option.stockField] ?? true,
+    (option) => getVariantStock(product, option) > 0,
   );
 
   return availableOption?.variant ?? pageTypeConfig.defaultVariant;

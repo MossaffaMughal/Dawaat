@@ -34,9 +34,9 @@ const AdminDashboard = () => {
     sale_price: "",
     category: "Notebook",
     stock_quantity: "0",
-    plain_pages_in_stock: true,
-    dotted_pages_in_stock: true,
-    lined_pages_in_stock: true,
+    plain_pages_stock_quantity: "0",
+    dotted_pages_stock_quantity: "0",
+    lined_pages_stock_quantity: "0",
   });
   const [uploadedImages, setUploadedImages] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -761,9 +761,15 @@ const AdminDashboard = () => {
           : "",
       category: product.category,
       stock_quantity: String(product.stock_quantity ?? 0),
-      plain_pages_in_stock: product.plain_pages_in_stock ?? true,
-      dotted_pages_in_stock: product.dotted_pages_in_stock ?? true,
-      lined_pages_in_stock: product.lined_pages_in_stock ?? true,
+      plain_pages_stock_quantity: String(
+        product.plain_pages_stock_quantity ?? 0,
+      ),
+      dotted_pages_stock_quantity: String(
+        product.dotted_pages_stock_quantity ?? 0,
+      ),
+      lined_pages_stock_quantity: String(
+        product.lined_pages_stock_quantity ?? 0,
+      ),
     });
     // Load existing product images for editing
     if (product.images && product.images.length > 0) {
@@ -844,9 +850,9 @@ const AdminDashboard = () => {
       sale_price: "",
       category: "Notebook",
       stock_quantity: "0",
-      plain_pages_in_stock: true,
-      dotted_pages_in_stock: true,
-      lined_pages_in_stock: true,
+      plain_pages_stock_quantity: "0",
+      dotted_pages_stock_quantity: "0",
+      lined_pages_stock_quantity: "0",
     });
     setUploadedImages([]);
     setExistingImageIds([]);
@@ -1136,52 +1142,48 @@ const AdminDashboard = () => {
                   </select>
                 </div>
 
-                <div className="form-group">
-                  <label>Stock Quantity</label>
-                  <input
-                    type="number"
-                    name="stock_quantity"
-                    min="0"
-                    step="1"
-                    value={productFormData.stock_quantity}
-                    onChange={handleProductInputChange}
-                    required
-                  />
-                  <small>
-                    Number of units available. Set to 0 to mark as out of
-                    stock.
-                  </small>
-                </div>
-
                 {(() => {
                   const pageTypeConfig = pageTypeConfigForCategory(
                     productFormData.category,
                   );
 
-                  if (!pageTypeConfig?.options?.length) {
-                    return null;
+                  if (pageTypeConfig?.options?.length) {
+                    return (
+                      <div className="form-row">
+                        {pageTypeConfig.options.map((option) => (
+                          <div className="form-group" key={option.variant}>
+                            <label>{option.label} Stock Quantity</label>
+                            <input
+                              type="number"
+                              name={option.stockField}
+                              min="0"
+                              step="1"
+                              value={productFormData[option.stockField] ?? "0"}
+                              onChange={handleProductInputChange}
+                              required
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    );
                   }
 
                   return (
-                    <div className="form-row">
-                      {pageTypeConfig.options.map((option) => (
-                        <div className="form-group" key={option.variant}>
-                          <label>
-                            <input
-                              type="checkbox"
-                              name={option.stockField}
-                              checked={productFormData[option.stockField]}
-                              onChange={(e) =>
-                                setProductFormData((prev) => ({
-                                  ...prev,
-                                  [option.stockField]: e.target.checked,
-                                }))
-                              }
-                            />
-                            {option.label} In Stock
-                          </label>
-                        </div>
-                      ))}
+                    <div className="form-group">
+                      <label>Stock Quantity</label>
+                      <input
+                        type="number"
+                        name="stock_quantity"
+                        min="0"
+                        step="1"
+                        value={productFormData.stock_quantity}
+                        onChange={handleProductInputChange}
+                        required
+                      />
+                      <small>
+                        Number of units available. Set to 0 to mark as out of
+                        stock.
+                      </small>
                     </div>
                   );
                 })()}

@@ -15,6 +15,20 @@ const generateOrderNumber = () => {
   );
 };
 
+// Mirrors productController.js: page-type variants map to their own stock
+// column, and a category's overall stock_quantity is the sum of the
+// columns relevant to it.
+const VARIANT_STOCK_COLUMNS = {
+  plain: "plain_pages_stock_quantity",
+  lined: "lined_pages_stock_quantity",
+  dotted: "dotted_pages_stock_quantity",
+};
+
+const PAGE_TYPE_VARIANT_COLUMNS = {
+  notebook: ["plain_pages_stock_quantity", "lined_pages_stock_quantity"],
+  notebooks: ["dotted_pages_stock_quantity", "lined_pages_stock_quantity"],
+};
+
 export const createOrder = async (req, res) => {
   const client = await pool.connect();
   try {
@@ -138,7 +152,9 @@ export const createOrder = async (req, res) => {
       // Lock the product row so concurrent orders can't both oversell the
       // same stock, then verify there's enough left before committing.
       const productResult = await client.query(
-        "SELECT name, stock_quantity FROM products WHERE id = $1 FOR UPDATE",
+        `SELECT name, category, stock_quantity, plain_pages_stock_quantity,
+                lined_pages_stock_quantity, dotted_pages_stock_quantity
+         FROM products WHERE id = $1 FOR UPDATE`,
         [item.productId],
       );
 
@@ -149,16 +165,25 @@ export const createOrder = async (req, res) => {
         });
       }
 
-      const { name: productName, stock_quantity: currentStock } =
-        productResult.rows[0];
+      const product = productResult.rows[0];
+      const variantColumn = item.variant
+        ? VARIANT_STOCK_COLUMNS[item.variant]
+        : null;
+
+      // Which single number gates this purchase: the specific page-type
+      // variant's stock if one was chosen, otherwise the product's overall
+      // stock_quantity.
+      const currentStock = variantColumn
+        ? product[variantColumn]
+        : product.stock_quantity;
 
       if (currentStock < item.quantity) {
         await client.query("ROLLBACK");
         return res.status(400).json({
           message:
             currentStock > 0
-              ? `Only ${currentStock} of "${productName}" left in stock`
-              : `"${productName}" is out of stock`,
+              ? `Only ${currentStock} of "${product.name}" left in stock`
+              : `"${product.name}" is out of stock`,
         });
       }
 
@@ -175,12 +200,36 @@ export const createOrder = async (req, res) => {
         ],
       );
 
-      // Update product stock and keep in_stock in sync
-      const newStock = currentStock - item.quantity;
-      await client.query(
-        "UPDATE products SET stock_quantity = $1, in_stock = $2 WHERE id = $3",
-        [newStock, newStock > 0, item.productId],
-      );
+      if (variantColumn) {
+        // Decrement the chosen variant, then recompute the overall
+        // stock_quantity as the sum of that category's variant columns.
+        const updatedVariantStock = currentStock - item.quantity;
+        const variantColumns =
+          PAGE_TYPE_VARIANT_COLUMNS[
+            String(product.category || "")
+              .trim()
+              .toLowerCase()
+          ] || [];
+        const newTotal = variantColumns.reduce((sum, column) => {
+          const value =
+            column === variantColumn ? updatedVariantStock : product[column];
+          return sum + (value ?? 0);
+        }, 0);
+
+        await client.query(
+          `UPDATE products
+           SET ${variantColumn} = $1, stock_quantity = $2, in_stock = $3
+           WHERE id = $4`,
+          [updatedVariantStock, newTotal, newTotal > 0, item.productId],
+        );
+      } else {
+        // Update overall product stock and keep in_stock in sync
+        const newStock = currentStock - item.quantity;
+        await client.query(
+          "UPDATE products SET stock_quantity = $1, in_stock = $2 WHERE id = $3",
+          [newStock, newStock > 0, item.productId],
+        );
+      }
     }
 
     await client.query("COMMIT");

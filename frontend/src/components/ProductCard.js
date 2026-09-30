@@ -5,6 +5,7 @@ import ReviewStats from "./ReviewStats";
 import {
   getAvailablePageTypeVariant,
   getPageTypeConfig,
+  getVariantStock,
 } from "../utils/pageType";
 import "../styles/ProductCard.css";
 
@@ -124,7 +125,8 @@ const ProductCard = ({ product, onAddToCart }) => {
             <p>{pageTypeConfig.prompt}</p>
             <div className="variant-options">
               {pageTypeConfig.options.map((option) => {
-                const isInStock = product?.[option.stockField] ?? true;
+                const variantStock = getVariantStock(product, option);
+                const isInStock = variantStock > 0;
 
                 return (
                   <label
@@ -146,8 +148,14 @@ const ProductCard = ({ product, onAddToCart }) => {
                     />
                     <span>
                       {option.label}{" "}
-                      {!isInStock && (
+                      {!isInStock ? (
                         <span className="out-of-stock">(Out of Stock)</span>
+                      ) : (
+                        variantStock <= 3 && (
+                          <span className="low-stock-inline">
+                            (Only {variantStock} left)
+                          </span>
+                        )
                       )}
                     </span>
                   </label>
@@ -165,7 +173,7 @@ const ProductCard = ({ product, onAddToCart }) => {
                   pageTypeConfig.options.some(
                     (option) =>
                       option.variant === selectedVariant &&
-                      !(product?.[option.stockField] ?? true),
+                      getVariantStock(product, option) <= 0,
                   )
                 }
               >

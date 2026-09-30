@@ -54,6 +54,38 @@ export const ensureDatabaseSchema = async () => {
     ADD COLUMN IF NOT EXISTS dotted_pages_in_stock BOOLEAN DEFAULT true;
   `);
 
+  // Per-page-type stock counts, replacing the plain in/out booleans above
+  // with actual quantities (migration for existing databases).
+  await pool.query(`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS plain_pages_stock_quantity INTEGER DEFAULT 999;
+  `);
+
+  await pool.query(`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS lined_pages_stock_quantity INTEGER DEFAULT 999;
+  `);
+
+  await pool.query(`
+    ALTER TABLE products
+    ADD COLUMN IF NOT EXISTS dotted_pages_stock_quantity INTEGER DEFAULT 999;
+  `);
+
+  // Backfill: a variant previously marked out of stock via the old boolean
+  // should start at 0 units instead of the new column's default of 999.
+  await pool.query(`
+    UPDATE products SET plain_pages_stock_quantity = 0
+    WHERE plain_pages_in_stock = false AND plain_pages_stock_quantity = 999;
+  `);
+  await pool.query(`
+    UPDATE products SET lined_pages_stock_quantity = 0
+    WHERE lined_pages_in_stock = false AND lined_pages_stock_quantity = 999;
+  `);
+  await pool.query(`
+    UPDATE products SET dotted_pages_stock_quantity = 0
+    WHERE dotted_pages_in_stock = false AND dotted_pages_stock_quantity = 999;
+  `);
+
   await pool.query(`
     ALTER TABLE products
     ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
